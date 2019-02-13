@@ -108,7 +108,8 @@ class Sysctl:
             0
         )
 
-        assert len(buf) >= 4
+        if len(buf) < 4:
+            raise Exception("response buffer too small")
         result = buf[:buf_length]
         kind, = struct.unpack("<I", result[:4])
         fmt = result[4:]
@@ -138,7 +139,8 @@ class Sysctl:
             "u32"
         ]
         ctl_type = kind & 0xF
-        assert ctl_type != 0
+        if ctl_type == 0:
+            raise Exception("Invalid ctl_type")
 
         if ctl_type == 5:
             return "struct" if (fmt[0:1] == b"S") else "opaque"
