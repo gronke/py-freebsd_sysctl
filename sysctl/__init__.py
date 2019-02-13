@@ -17,6 +17,7 @@ class Sysctl:
     _oid: typing.Optional[typing.List[int]]
     _kind: typing.Optional[int]
     _fmt = typing.Optional[bytes]
+    _size: typing.Optional[int]
 
     def __init__(
         self,
@@ -27,6 +28,7 @@ class Sysctl:
         self._oid = oid
         self._kind = None
         self._fmt = None
+        self._size = None
 
     @property
     def oid(self) -> typing.List[int]:
@@ -55,6 +57,12 @@ class Sysctl:
         if self._fmt is None:
             self.__query_kind_and_fmt()
         return self._fmt
+
+    @property
+    def size(self) -> int:
+        if self._size is None:
+            self._size = self.oidsize(self.oid, self.ctl_type)
+        return self._size
 
     def __query_kind_and_fmt(self) -> None:
         self._kind, self._fmt = self.oidfmt(self.oid)
@@ -114,6 +122,45 @@ class Sysctl:
         kind, = struct.unpack("<I", result[:4])
         fmt = result[4:]
         return (kind, fmt)
+
+    @staticmethod
+    def oidsize(oid: typing.List[int], ctl_type: str) -> bytes:
+
+        oid_type = ctypes.c_int * len(oid)
+        _oid = (oid_type)(*oid)
+        p_oid = ctypes.POINTER(oid_type)(_oid)
+
+        length = ctypes.c_int()
+        p_length = ctypes.POINTER(ctypes.c_int)(length)
+
+        sysctl.libc.dll.sysctl(
+            p_oid,
+            len(oid),
+            None,
+            p_length,
+            0
+        )
+
+        min_sizes = {
+            "node": 0,
+            "int": ctypes.sizeof(ctypes.c_int),
+            "string": 0,
+            "s64": ctypes.sizeof(ctypes.c_int64),
+            "struct": 0,
+            "opaque": 0,
+            "uint": ctypes.sizeof(ctypes.c_uint),
+            "long": ctypes.sizeof(ctypes.c_long),
+            "ulong": ctypes.sizeof(ctypes.c_ulong),
+            "u64": ctypes.sizeof(ctypes.c_uint8),
+            "u8": ctypes.sizeof(ctypes.c_uint8),
+            "u16": ctypes.sizeof(ctypes.c_uint16),
+            "s8": ctypes.sizeof(ctypes.c_int8),
+            "s16": ctypes.sizeof(ctypes.c_int16),
+            "s32": ctypes.sizeof(ctypes.c_int32),
+            "u32": ctypes.sizeof(ctypes.c_uint32)
+        }
+
+        return max(length.value, min_sizes[ctl_type])
 
     @property
     def ctl_type(self) -> str:
