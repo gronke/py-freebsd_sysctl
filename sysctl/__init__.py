@@ -64,15 +64,9 @@ class Sysctl:
             0
         )
 
-        print(self.name)
-        print(self.oid)
-        print(buf.value)
 
-        return buf.value
-
-
-Sysctl("security.jail.enforce_statfs")
-Sysctl("security.jail.param.host.hostuuid")
-Sysctl("security.jail.param.path")
-Sysctl("security.jail.param.osrelease")
-Sysctl("security.jail.param.children.max")
+# Sysctl("security.jail.enforce_statfs")
+# Sysctl("security.jail.param.host.hostuuid")
+# Sysctl("security.jail.param.path")
+# Sysctl("security.jail.param.osrelease")
+# Sysctl("security.jail.param.children.max")
