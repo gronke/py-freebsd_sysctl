@@ -33,91 +33,91 @@ class CtlType:
         return str(value)
 
 
-class NodeType(CtlType):
+class NODE(CtlType):
     pass
 
 
-class IntType(CtlType):
+class INT(CtlType):
     ctype = ctypes.c_int
     min_size = ctypes.sizeof(ctypes.c_int)
     unpack_format = "i"
 
 
-class StringType(CtlType):
+class STRING(CtlType):
     @property
     def value(self) -> str:
         return self.data.value.decode()
 
 
-class Int64Type(CtlType):
+class S64(CtlType):
     ctype = ctypes.c_int64
     min_size = ctypes.sizeof(ctypes.c_int64)
     unpack_format = "q"
 
 
-class StructType(CtlType):
+class STRUCT(CtlType):
     pass
 
 
-class OpaqueType(CtlType):
+class OPAQUE(CtlType):
     pass
 
 
-class UIntType(CtlType):
+class UINT(CtlType):
     ctype = ctypes.c_uint
     min_size = ctypes.sizeof(ctypes.c_uint)
     unpack_format = "I"
 
 
-class LongType(CtlType):
+class LONG(CtlType):
     ctype = ctypes.c_long
     min_size = ctypes.sizeof(ctypes.c_long)
     unpack_format = "q"
 
 
-class ULongType(CtlType):
+class ULONG(CtlType):
     ctype = ctypes.c_ulong
     min_size = ctypes.sizeof(ctypes.c_ulong)
     unpack_format = "Q"
 
 
-class UInt64Type(CtlType):
+class U64(CtlType):
     ctype = ctypes.c_uint64
     min_size = ctypes.sizeof(ctypes.c_uint64)
     unpack_format = "Q"
 
 
-class UInt8Type(CtlType):
+class U8(CtlType):
     ctype = ctypes.c_uint8
     min_size = ctypes.sizeof(ctypes.c_uint8)
     unpack_format = "B"
 
 
-class UInt16Type(CtlType):
+class U16(CtlType):
     ctype = ctypes.c_uint16
     min_size = ctypes.sizeof(ctypes.c_uint16)
     unpack_format = "H"
 
 
-class Int8Type(CtlType):
+class S8(CtlType):
     ctype = ctypes.c_int8
     min_size = ctypes.sizeof(ctypes.c_int8)
     unpack_format = "b"
 
 
-class Int16Type(CtlType):
+class S16(CtlType):
     ctype = ctypes.c_int16
     min_size = ctypes.sizeof(ctypes.c_int16)
     unpack_format = "h"
 
 
-class Int32Type(CtlType):
+class S32(CtlType):
     ctype = ctypes.c_int32
     min_size = ctypes.sizeof(ctypes.c_int32)
     unpack_format = "i"
 
 
-class UInt32Type(CtlType):
+class U32(CtlType):
     ctype = ctypes.c_uint32
     min_size = ctypes.sizeof(ctypes.c_uint32)
     unpack_format = "I"
@@ -126,36 +126,36 @@ class UInt32Type(CtlType):
 def identify_type(kind: int, fmt: bytes) -> CtlType:
     ctl_type = kind & 0xF
     if ctl_type == 1:
-        return NodeType
+        return NODE
     elif ctl_type == 2:
-        return IntType
+        return INT
     elif ctl_type == 3:
-        return StringType
+        return STRING
     elif ctl_type == 4:
-        return Int64Type
+        return S64
     elif ctl_type == 5:
-        # return StructType if (fmt[0:1] == b"S") else OpaqueType
-        return OpaqueType
+        # return STRUCT if (fmt[0:1] == b"S") else OPAQUE
+        return OPAQUE
     elif ctl_type == 6:
-        return UIntType
+        return UINT
     elif ctl_type == 7:
-        return LongType
+        return LONG
     elif ctl_type == 8:
-        return ULongType
+        return ULONG
     elif ctl_type == 9:
-        return UInt64Type
+        return U64
     elif ctl_type == 10:
-        return UInt8Type
+        return U8
     elif ctl_type == 11:
-        return UInt16Type
+        return U16
     elif ctl_type == 12:
-        return Int16Type
+        return S16
     elif ctl_type == 13:
-        return Int16Type
+        return S16
     elif ctl_type == 14:
-        return Int32Type
+        return S32
     elif ctl_type == 15:
-        return UInt32Type
+        return U32
     else:
         raise Exception(f"Invalid ctl_type: {ctl_type}")
 
