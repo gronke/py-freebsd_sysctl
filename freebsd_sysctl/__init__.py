@@ -88,13 +88,13 @@ class Sysctl:
     @property
     def size(self) -> int:
         if self._size is None:
-            self._size = self.oidsize(self.oid, self.ctl_type)
+            self._size = self.query_size(self.oid, self.ctl_type)
         return self._size
 
     @property
     def raw_value(self) -> int:
         if self._value is None:
-            self._value = self.oidvalue(self.oid, self.size, self.ctl_type)
+            self._value = self.qurty_value(self.oid, self.size, self.ctl_type)
         return self._value
 
     @property
@@ -104,11 +104,11 @@ class Sysctl:
     @property
     def description(self) -> int:
         if self._description is None:
-            self._description = self.oiddescription(self.oid)
+            self._description = self.query_description(self.oid)
         return self._description
 
     def __query_kind_and_fmt(self) -> None:
-        self._kind, self._fmt = self.oidfmt(self.oid)
+        self._kind, self._fmt = self.query_fmt(self.oid)
 
     @staticmethod
     def name2oid(name: str) -> typing.List[int]:
@@ -135,7 +135,7 @@ class Sysctl:
         return res[:oid_length]
 
     @staticmethod
-    def oidfmt(oid: typing.List[int]) -> bytes:
+    def query_fmt(oid: typing.List[int]) -> bytes:
 
         qoid_len = (2 + len(oid))
         qoid_type = ctypes.c_int * qoid_len
@@ -167,7 +167,7 @@ class Sysctl:
         return (kind, fmt)
 
     @staticmethod
-    def oidsize(
+    def query_size(
         oid: typing.List[int],
         ctl_type: freebsd_sysctl.types.CtlType
     ) -> bytes:
@@ -190,7 +190,7 @@ class Sysctl:
         return max(length.value, ctl_type.min_size)
 
     @staticmethod
-    def oidvalue(
+    def qurty_value(
         oid: typing.List[int],
         size: int,
         ctl_type: freebsd_sysctl.types.CtlType
@@ -222,7 +222,7 @@ class Sysctl:
         return ctl_type(buf, size)
 
     @staticmethod
-    def oiddescription(
+    def query_description(
         oid: typing.List[int]
     ) -> str:
 
