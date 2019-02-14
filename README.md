@@ -2,7 +2,8 @@
 
 > A native Python module for FreeBSD sysctl.
 
-This Python 3 interface for FreeBSD sysctl has no third party dependency and does not require a compile step to install. It is meant for performant (read) access to sysctls, their type, value and description.
+This Python 3 interface for FreeBSD sysctl has no third party dependency and does not require a compile step to install.
+It is meant for performant (read) access to sysctls, their type, value and description.
 
 
 ```python3
@@ -36,6 +37,7 @@ With either a sysctl `name` or `oid` the other properties provide memoized acces
 
 ---
 
-This project is heavily inspired by [johalon/sysctl-rs](https://github.com/johalun/sysctl-rs). Kudos to @fabianfreyer for untirable support and debugging.
+This project is heavily inspired by [johalun/sysctl-rs](https://github.com/johalun/sysctl-rs).
+Kudos to @fabianfreyer for untiring support and debugging.
 
 It is developed and maintained by Stefan Grönke ([@gronke](https://github.com/gronke)) and published under [BSD 2-Clause License](LICENSE.txt).
