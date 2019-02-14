@@ -63,7 +63,9 @@ def test_sysctl_names(sysctl_types):
 def test_sysctl_types(sysctl_types):
 	for sysctl_name, sysctl_type in sysctl_types.items():
 		current_sysctl = sysctl.Sysctl(sysctl_name)
-		assert sysctl_type == map_sysctl_type(current_sysctl.ctl_type)
+		assert sysctl_type == map_sysctl_type(current_sysctl.ctl_type), (
+            sysctl_name
+        )
 
 
 def test_sysctl_values(sysctl_types):
@@ -81,7 +83,7 @@ def test_sysctl_values(sysctl_types):
 		elif isinstance(current_sysctl.raw_value, sysctl.NODE):
 			continue
 		else:
-			assert stdout == str(current_sysctl.value).strip()
+			assert str(current_sysctl.value).strip() == stdout, sysctl_name
 
 
 def test_sysctl_descriptions(sysctl_types):
@@ -95,4 +97,5 @@ def test_sysctl_descriptions(sysctl_types):
 			sysctl_name
 		]).strip().decode()
 
-		assert stdout == str(current_sysctl.description).strip()
+		assert stdout == str(current_sysctl.description).strip(), sysctl_name
+
