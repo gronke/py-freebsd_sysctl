@@ -1,6 +1,7 @@
+import os.path
+import pytest
 import subprocess
 import sys
-import os.path
 
 project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_path)
@@ -8,7 +9,8 @@ sys.path.insert(0, project_path)
 import sysctl
 
 
-def get_sysctl_types():
+@pytest.fixture
+def sysctl_types():
 	stdout = subprocess.check_output(["/sbin/sysctl", "-a", "-t"])
 	lines = stdout.decode().strip().split("\n")
 	
@@ -52,10 +54,31 @@ def map_sysctl_type(ctl_type: sysctl.CtlType) -> str:
 	raise Exception(f"Unknown CtlType: {ctl_type}")
 
 
-def test_sysctl_types():
-	sysctl_types = get_sysctl_types()
-	
+def test_sysctl_names(sysctl_types):
 	for sysctl_name, sysctl_type in sysctl_types.items():
 		current_sysctl = sysctl.Sysctl(sysctl_name)
 		assert sysctl_name == current_sysctl.name
+
+
+def test_sysctl_types(sysctl_types):
+	for sysctl_name, sysctl_type in sysctl_types.items():
+		current_sysctl = sysctl.Sysctl(sysctl_name)
 		assert sysctl_type == map_sysctl_type(current_sysctl.ctl_type)
+
+
+def test_sysctl_values(sysctl_types):
+	for sysctl_name, sysctl_type in sysctl_types.items():
+		current_sysctl = sysctl.Sysctl(sysctl_name)
+
+		stdout = subprocess.check_output([
+			"/sbin/sysctl",
+			"-n",
+			sysctl_name
+		]).strip().decode()
+
+		if isinstance(current_sysctl.raw_value, sysctl.OpaqueType):
+			continue
+		elif isinstance(current_sysctl.raw_value, sysctl.NodeType):
+			continue
+		else:
+			assert stdout == str(current_sysctl.value).strip()
