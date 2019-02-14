@@ -34,91 +34,92 @@ import freebsd_sysctl
 
 @pytest.fixture
 def sysctl_types():
-	stdout = subprocess.check_output(["/sbin/sysctl", "-a", "-t"])
-	lines = stdout.decode().strip().split("\n")
-	
-	return dict(filter(
-		lambda x: not x[0].endswith("."),
-		[x.split(": ", maxsplit=1) for x in lines]
-	))
+    stdout = subprocess.check_output(["/sbin/sysctl", "-a", "-t"])
+    lines = stdout.decode().strip().split("\n")
+    
+    return dict(filter(
+        lambda x: not x[0].endswith("."),
+        [x.split(": ", maxsplit=1) for x in lines]
+    ))
 
 
 def map_sysctl_type(ctl_type: freebsd_sysctl.types.CtlType) -> str:
-	if ctl_type == freebsd_sysctl.types.NODE:
-		return "node"
-	elif ctl_type == freebsd_sysctl.types.INT:
-		return "integer"
-	elif ctl_type == freebsd_sysctl.types.STRING:
-		return "string"
-	elif ctl_type == freebsd_sysctl.types.S64:
-		return "int64_t"
-	elif ctl_type == freebsd_sysctl.types.OPAQUE:
-		return "opaque"
-	elif ctl_type == freebsd_sysctl.types.UINT:
-		return "unsigned integer"
-	elif ctl_type == freebsd_sysctl.types.LONG:
-		return "long integer"
-	elif ctl_type == freebsd_sysctl.types.ULONG:
-		return "unsigned long"
-	elif ctl_type == freebsd_sysctl.types.U64:
-		return "uint64_t"
-	elif ctl_type == freebsd_sysctl.types.U8:
-		return "uint8_t"
-	elif ctl_type == freebsd_sysctl.types.U16:
-		return "uint16_t"
-	elif ctl_type == freebsd_sysctl.types.S8:
-		return "int8_t"
-	elif ctl_type == freebsd_sysctl.types.S16:
-		return "int16_t"
-	elif ctl_type == freebsd_sysctl.types.S32:
-		return "int32_t"
-	elif ctl_type == freebsd_sysctl.types.U32:
-		return "uint32_t"
-	raise Exception(f"Unknown CtlType: {ctl_type}")
+    if ctl_type == freebsd_sysctl.types.NODE:
+        return "node"
+    elif ctl_type == freebsd_sysctl.types.INT:
+        return "integer"
+    elif ctl_type == freebsd_sysctl.types.STRING:
+        return "string"
+    elif ctl_type == freebsd_sysctl.types.S64:
+        return "int64_t"
+    elif ctl_type == freebsd_sysctl.types.OPAQUE:
+        return "opaque"
+    elif ctl_type == freebsd_sysctl.types.UINT:
+        return "unsigned integer"
+    elif ctl_type == freebsd_sysctl.types.LONG:
+        return "long integer"
+    elif ctl_type == freebsd_sysctl.types.ULONG:
+        return "unsigned long"
+    elif ctl_type == freebsd_sysctl.types.U64:
+        return "uint64_t"
+    elif ctl_type == freebsd_sysctl.types.U8:
+        return "uint8_t"
+    elif ctl_type == freebsd_sysctl.types.U16:
+        return "uint16_t"
+    elif ctl_type == freebsd_sysctl.types.S8:
+        return "int8_t"
+    elif ctl_type == freebsd_sysctl.types.S16:
+        return "int16_t"
+    elif ctl_type == freebsd_sysctl.types.S32:
+        return "int32_t"
+    elif ctl_type == freebsd_sysctl.types.U32:
+        return "uint32_t"
+    raise Exception(f"Unknown CtlType: {ctl_type}")
 
 
 def test_sysctl_names(sysctl_types):
-	for sysctl_name, sysctl_type in sysctl_types.items():
-		current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
-		assert sysctl_name == current_sysctl.name
+    for sysctl_name, sysctl_type in sysctl_types.items():
+        current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+        assert sysctl_name == current_sysctl.name
 
 
 def test_sysctl_types(sysctl_types):
-	for sysctl_name, sysctl_type in sysctl_types.items():
-		current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
-		current_mapped_type = map_sysctl_type(current_sysctl.ctl_type)
-		assert sysctl_type == current_mapped_type, sysctl_name
+    for sysctl_name, sysctl_type in sysctl_types.items():
+        current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+        current_mapped_type = map_sysctl_type(current_sysctl.ctl_type)
+        assert sysctl_type == current_mapped_type, sysctl_name
 
 
 def test_sysctl_values(sysctl_types):
-	for sysctl_name, sysctl_type in sysctl_types.items():
-		current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+    for sysctl_name, sysctl_type in sysctl_types.items():
+        current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
 
-		stdout = subprocess.check_output([
-			"/sbin/sysctl",
-			"-n",
-			sysctl_name
-		]).strip().decode()
-
-		if isinstance(current_sysctl.raw_value, freebsd_sysctl.OPAQUE):
-			continue
-		elif isinstance(current_sysctl.raw_value, freebsd_sysctl.NODE):
-			continue
-		else:
-			current_value = str(current_sysctl.value).strip()
-			assert current_value == stdout, sysctl_name
+        stdout = subprocess.check_output([
+            "/sbin/sysctl",
+            "-n",
+            sysctl_name
+        ]).strip().decode()
+    
+        raw_value = current_sysctl.raw_value
+        if isinstance(raw_value, freebsd_sysctl.types.OPAQUE):
+            continue
+        elif isinstance(raw_value, freebsd_sysctl.types.NODE):
+            continue
+        else:
+            current_value = str(current_sysctl.value).strip()
+            assert current_value == stdout, sysctl_name
 
 
 def test_sysctl_descriptions(sysctl_types):
-	for sysctl_name, sysctl_type in sysctl_types.items():
-		current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+    for sysctl_name, sysctl_type in sysctl_types.items():
+        current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
 
-		stdout = subprocess.check_output([
-			"/sbin/sysctl",
-			"-d",
-			"-n",
-			sysctl_name
-		]).strip().decode()
+        stdout = subprocess.check_output([
+            "/sbin/sysctl",
+            "-d",
+            "-n",
+            sysctl_name
+        ]).strip().decode()
 
-		current_description = str(current_sysctl.description).strip()
-		assert stdout == current_description, sysctl_name
+        current_description = str(current_sysctl.description).strip()
+        assert stdout == current_description, sysctl_name
