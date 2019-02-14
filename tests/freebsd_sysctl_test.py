@@ -43,36 +43,36 @@ def sysctl_types():
 	))
 
 
-def map_sysctl_type(ctl_type: freebsd_sysctl.CtlType) -> str:
-	if ctl_type == freebsd_sysctl.NODE:
+def map_sysctl_type(ctl_type: freebsd_sysctl.types.CtlType) -> str:
+	if ctl_type == freebsd_sysctl.types.NODE:
 		return "node"
-	elif ctl_type == freebsd_sysctl.INT:
+	elif ctl_type == freebsd_sysctl.types.INT:
 		return "integer"
-	elif ctl_type == freebsd_sysctl.STRING:
+	elif ctl_type == freebsd_sysctl.types.STRING:
 		return "string"
-	elif ctl_type == freebsd_sysctl.S64:
+	elif ctl_type == freebsd_sysctl.types.S64:
 		return "int64_t"
-	elif ctl_type == freebsd_sysctl.OPAQUE:
+	elif ctl_type == freebsd_sysctl.types.OPAQUE:
 		return "opaque"
-	elif ctl_type == freebsd_sysctl.UINT:
+	elif ctl_type == freebsd_sysctl.types.UINT:
 		return "unsigned integer"
-	elif ctl_type == freebsd_sysctl.LONG:
+	elif ctl_type == freebsd_sysctl.types.LONG:
 		return "long integer"
-	elif ctl_type == freebsd_sysctl.ULONG:
+	elif ctl_type == freebsd_sysctl.types.ULONG:
 		return "unsigned long"
-	elif ctl_type == freebsd_sysctl.U64:
+	elif ctl_type == freebsd_sysctl.types.U64:
 		return "uint64_t"
-	elif ctl_type == freebsd_sysctl.U8:
+	elif ctl_type == freebsd_sysctl.types.U8:
 		return "uint8_t"
-	elif ctl_type == freebsd_sysctl.U16:
+	elif ctl_type == freebsd_sysctl.types.U16:
 		return "uint16_t"
-	elif ctl_type == freebsd_sysctl.S8:
+	elif ctl_type == freebsd_sysctl.types.S8:
 		return "int8_t"
-	elif ctl_type == freebsd_sysctl.S16:
+	elif ctl_type == freebsd_sysctl.types.S16:
 		return "int16_t"
-	elif ctl_type == freebsd_sysctl.S32:
+	elif ctl_type == freebsd_sysctl.types.S32:
 		return "int32_t"
-	elif ctl_type == freebsd_sysctl.U32:
+	elif ctl_type == freebsd_sysctl.types.U32:
 		return "uint32_t"
 	raise Exception(f"Unknown CtlType: {ctl_type}")
 

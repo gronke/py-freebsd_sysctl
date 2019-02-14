@@ -26,161 +26,12 @@ import ctypes
 import struct
 import enum
 import freebsd_sysctl.libc
+import freebsd_sysctl.types
 
 NULL_BYTES = b"\x00"
 CTL_MAXNAME = ctypes.c_uint(24)
 T_OID = (ctypes.c_int * 2)
 BUFSIZ = 1024 # see /include/stdio.h#L209
-
-
-class CtlType:
-    min_size = 0
-    data: bytes
-    ctype: typing.Optional[type] = None
-    unpack_format: typing.Optional[str] = None
-
-    def __init__(self, data: bytes) -> None:
-        self.data = data
-
-    @property
-    def value(self) -> typing.Any:
-        if self.unpack_format is None:
-            return self.data.value
-        value, = struct.unpack(f"<{self.unpack_format}", self.data)
-        return value
-
-    def __str__(self) -> str:
-        value = self.value
-        if isinstance(value, bytes) is True:
-            return value.decode()
-        return str(value)
-
-
-class NODE(CtlType):
-    pass
-
-
-class INT(CtlType):
-    ctype = ctypes.c_int
-    min_size = ctypes.sizeof(ctypes.c_int)
-    unpack_format = "i"
-
-
-class STRING(CtlType):
-    @property
-    def value(self) -> str:
-        return self.data.value.decode()
-
-
-class S64(CtlType):
-    ctype = ctypes.c_int64
-    min_size = ctypes.sizeof(ctypes.c_int64)
-    unpack_format = "q"
-
-
-class STRUCT(CtlType):
-    pass
-
-
-class OPAQUE(CtlType):
-    pass
-
-
-class UINT(CtlType):
-    ctype = ctypes.c_uint
-    min_size = ctypes.sizeof(ctypes.c_uint)
-    unpack_format = "I"
-
-
-class LONG(CtlType):
-    ctype = ctypes.c_long
-    min_size = ctypes.sizeof(ctypes.c_long)
-    unpack_format = "q"
-
-
-class ULONG(CtlType):
-    ctype = ctypes.c_ulong
-    min_size = ctypes.sizeof(ctypes.c_ulong)
-    unpack_format = "Q"
-
-
-class U64(CtlType):
-    ctype = ctypes.c_uint64
-    min_size = ctypes.sizeof(ctypes.c_uint64)
-    unpack_format = "Q"
-
-
-class U8(CtlType):
-    ctype = ctypes.c_uint8
-    min_size = ctypes.sizeof(ctypes.c_uint8)
-    unpack_format = "B"
-
-
-class U16(CtlType):
-    ctype = ctypes.c_uint16
-    min_size = ctypes.sizeof(ctypes.c_uint16)
-    unpack_format = "H"
-
-
-class S8(CtlType):
-    ctype = ctypes.c_int8
-    min_size = ctypes.sizeof(ctypes.c_int8)
-    unpack_format = "b"
-
-
-class S16(CtlType):
-    ctype = ctypes.c_int16
-    min_size = ctypes.sizeof(ctypes.c_int16)
-    unpack_format = "h"
-
-
-class S32(CtlType):
-    ctype = ctypes.c_int32
-    min_size = ctypes.sizeof(ctypes.c_int32)
-    unpack_format = "i"
-
-
-class U32(CtlType):
-    ctype = ctypes.c_uint32
-    min_size = ctypes.sizeof(ctypes.c_uint32)
-    unpack_format = "I"
-
-
-def identify_type(kind: int, fmt: bytes) -> CtlType:
-    ctl_type = kind & 0xF
-    if ctl_type == 1:
-        return NODE
-    elif ctl_type == 2:
-        return INT
-    elif ctl_type == 3:
-        return STRING
-    elif ctl_type == 4:
-        return S64
-    elif ctl_type == 5:
-        # return STRUCT if (fmt[0:1] == b"S") else OPAQUE
-        return OPAQUE
-    elif ctl_type == 6:
-        return UINT
-    elif ctl_type == 7:
-        return LONG
-    elif ctl_type == 8:
-        return ULONG
-    elif ctl_type == 9:
-        return U64
-    elif ctl_type == 10:
-        return U8
-    elif ctl_type == 11:
-        return U16
-    elif ctl_type == 12:
-        return S8
-    elif ctl_type == 13:
-        return S16
-    elif ctl_type == 14:
-        return S32
-    elif ctl_type == 15:
-        return U32
-    else:
-        raise Exception(f"Invalid ctl_type: {ctl_type}")
 
 
 class Sysctl:
@@ -316,7 +167,10 @@ class Sysctl:
         return (kind, fmt)
 
     @staticmethod
-    def oidsize(oid: typing.List[int], ctl_type: CtlType) -> bytes:
+    def oidsize(
+        oid: typing.List[int],
+        ctl_type: freebsd_sysctl.types.CtlType
+    ) -> bytes:
 
         oid_type = ctypes.c_int * len(oid)
         _oid = (oid_type)(*oid)
@@ -339,7 +193,7 @@ class Sysctl:
     def oidvalue(
         oid: typing.List[int],
         size: int,
-        ctl_type: CtlType
+        ctl_type: freebsd_sysctl.types.CtlType
     ) -> bytes:
 
         # ToDo: check if value is readable
@@ -397,9 +251,13 @@ class Sysctl:
         return buf.value.decode()
 
     @property
-    def ctl_type(self) -> CtlType:
+    def ctl_type(self) -> freebsd_sysctl.types.CtlType:
         return self.get_ctl_type(self.kind, self.fmt)
 
     @staticmethod
-    def get_ctl_type(kind: int, fmt: bytes) -> CtlType:
-        return identify_type(kind, fmt)
+    def get_ctl_type(
+        kind: int,
+        fmt: bytes
+    ) -> freebsd_sysctl.types.CtlType:
+        return freebsd_sysctl.types.identify_type(kind, fmt)
+
