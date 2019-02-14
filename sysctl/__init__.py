@@ -44,7 +44,9 @@ class IntType(CtlType):
 
 
 class StringType(CtlType):
-    pass
+    @property
+    def value(self) -> str:
+        return self.data.value.decode()
 
 
 class Int64Type(CtlType):
@@ -214,10 +216,14 @@ class Sysctl:
         return self._size
 
     @property
-    def value(self) -> int:
+    def raw_value(self) -> int:
         if self._value is None:
             self._value = self.oidvalue(self.oid, self.size, self.ctl_type)
         return self._value
+
+    @property
+    def value(self) -> int:
+        return self.raw_value.value
 
     def __query_kind_and_fmt(self) -> None:
         self._kind, self._fmt = self.oidfmt(self.oid)
