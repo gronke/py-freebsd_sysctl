@@ -91,23 +91,31 @@ def test_sysctl_types(sysctl_types):
 
 
 def test_sysctl_values(sysctl_types):
+    dynamic_sysctl_names = [
+        "kern.ipc.pipekva",
+        "kern.lastpid",
+        "kern.openfiles"
+    ]
     for sysctl_name, sysctl_type in sysctl_types.items():
         current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+
+        raw_value = current_sysctl.raw_value
+        if any([
+            isinstance(raw_value, freebsd_sysctl.types.OPAQUE),
+            isinstance(raw_value, freebsd_sysctl.types.NODE),
+            sysctl_name.endswith("counter"),
+            (sysctl_name in dynamic_sysctl_names)
+        ]):
+            continue
 
         stdout = subprocess.check_output([
             "/sbin/sysctl",
             "-n",
             sysctl_name
         ]).strip().decode()
-    
-        raw_value = current_sysctl.raw_value
-        if isinstance(raw_value, freebsd_sysctl.types.OPAQUE):
-            continue
-        elif isinstance(raw_value, freebsd_sysctl.types.NODE):
-            continue
-        else:
-            current_value = str(current_sysctl.value).strip()
-            assert current_value == stdout, sysctl_name
+
+        current_value = str(current_sysctl.value).strip()
+        assert current_value == stdout, sysctl_name
 
 
 def test_sysctl_descriptions(sysctl_types):
@@ -123,3 +131,4 @@ def test_sysctl_descriptions(sysctl_types):
 
         current_description = str(current_sysctl.description).strip()
         assert stdout == current_description, sysctl_name
+
