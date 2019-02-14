@@ -87,7 +87,8 @@ def test_sysctl_types(sysctl_types):
         assert sysctl_type == current_mapped_type, sysctl_name
 
 
-def test_sysctl_values(sysctl_types):
+def test_sysctl_values(benchmark, sysctl_types):
+
     dynamic_sysctl_names = [
         "kern.ipc.pipekva",
         "kern.lastpid",
@@ -98,10 +99,16 @@ def test_sysctl_values(sysctl_types):
         "debug.vn_io_faults",
         "hw.usermem"
     ]
-    for sysctl_name, sysctl_type in sysctl_types.items():
-        current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
 
-        raw_value = current_sysctl.raw_value
+    def lookup_values(sysctl_types):
+        for sysctl_name, sysctl_type in sysctl_types.items():
+            yield sysctl_name, freebsd_sysctl.Sysctl(sysctl_name).raw_value
+
+    raw_values = dict(benchmark(lookup_values, sysctl_types))
+
+    for sysctl_name, sysctl_type in sysctl_types.items():
+        raw_value = raw_values[sysctl_name]
+
         if any([
             isinstance(raw_value, freebsd_sysctl.types.OPAQUE),
             isinstance(raw_value, freebsd_sysctl.types.NODE),
@@ -123,21 +130,24 @@ def test_sysctl_values(sysctl_types):
             sysctl_name
         ]).strip().decode()
 
-        current_value = str(current_sysctl.raw_value).strip()
+        current_value = str(raw_value).strip()
         assert current_value == stdout, sysctl_name
 
 
-def test_sysctl_descriptions(sysctl_types):
-    for sysctl_name, sysctl_type in sysctl_types.items():
-        current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+def test_sysctl_descriptions(benchmark, sysctl_types):
 
+    def lookup_descriptions(sysctl_types):
+        for sysctl_name, sysctl_type in sysctl_types.items():
+            yield sysctl_name, freebsd_sysctl.Sysctl(sysctl_name).description
+
+    descriptions = dict(benchmark(lookup_descriptions, sysctl_types))
+
+    for sysctl_name, sysctl_type in sysctl_types.items():
         stdout = subprocess.check_output([
             "/sbin/sysctl",
             "-d",
             "-n",
             sysctl_name
-        ]).strip().decode()
+        ]).decode().strip("\n")
 
-        current_description = str(current_sysctl.description).strip()
-        assert stdout == current_description, sysctl_name
-
+        assert stdout == descriptions[sysctl_name], sysctl_name
