@@ -32,18 +32,35 @@ class CtlType:
     ctype: typing.Optional[type] = None
     unpack_format: typing.Optional[str] = None
 
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: bytes, size: int) -> None:
         self.data = data
+        self.size = size
+
+    @property
+    def amount(self):
+        if self.min_size == 0:
+            return 1
+        return int(self.size / self.min_size)
 
     @property
     def value(self) -> typing.Any:
         if self.unpack_format is None:
             return self.data.value
-        value, = struct.unpack(f"<{self.unpack_format}", self.data)
-        return value
+        values = list(struct.unpack(
+            f"<{self.unpack_format * self.amount}",
+            self.data
+        ))
+        if len(values) == 1:
+            return values[0]
+        return values
 
     def __str__(self) -> str:
-        value = self.value
+        if self.amount == 1:
+            return self.__tostring(self.value)
+        return " ".join([self.__tostring(x) for x in self.value])
+
+    @staticmethod
+    def __tostring(value: typing.Any) -> str:
         if isinstance(value, bytes) is True:
             return value.decode()
         return str(value)
@@ -60,6 +77,7 @@ class INT(CtlType):
 
 
 class STRING(CtlType):
+
     @property
     def value(self) -> str:
         return self.data.value.decode()

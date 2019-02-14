@@ -114,7 +114,7 @@ def test_sysctl_values(sysctl_types):
             sysctl_name
         ]).strip().decode()
 
-        current_value = str(current_sysctl.value).strip()
+        current_value = str(current_sysctl.raw_value).strip()
         assert current_value == stdout, sysctl_name
 
 

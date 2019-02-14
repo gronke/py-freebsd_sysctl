@@ -219,7 +219,7 @@ class Sysctl:
             0
         )
 
-        return ctl_type(buf)
+        return ctl_type(buf, size)
 
     @staticmethod
     def oiddescription(
