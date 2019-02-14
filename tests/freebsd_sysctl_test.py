@@ -26,8 +26,6 @@ import pytest
 import subprocess
 import sys
 
-project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
 import freebsd_sysctl
 
 
