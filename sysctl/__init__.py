@@ -7,6 +7,7 @@ import sysctl.libc
 NULL_BYTES = b"\x00"
 CTL_MAXNAME = ctypes.c_uint(24)
 T_OID = (ctypes.c_int * 2)
+BUFSIZ = 1024 # see /include/stdio.h#L209
 
 
 class CtlType:
@@ -253,7 +254,7 @@ class Sysctl:
         qoid = (qoid_type)(*([0, 4] + oid))
         p_qoid = ctypes.POINTER(qoid_type)(qoid)
 
-        buf_type = ctypes.c_char * 1024
+        buf_type = ctypes.c_char * BUFSIZ
         buf = buf_type()
         p_buf = ctypes.POINTER(buf_type)(buf)
         buf_void = ctypes.cast(p_buf, ctypes.c_void_p)
