@@ -1,5 +1,3 @@
-# see https://wiki.freebsd.org/AlfonsoSiciliano/sysctlmibinfo
-
 import typing
 import ctypes
 import struct
