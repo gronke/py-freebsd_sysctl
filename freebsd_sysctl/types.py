@@ -23,6 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import ctypes
 import typing
+import struct
 
 
 class CtlType:
