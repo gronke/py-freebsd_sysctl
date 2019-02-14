@@ -94,7 +94,12 @@ def test_sysctl_values(sysctl_types):
     dynamic_sysctl_names = [
         "kern.ipc.pipekva",
         "kern.lastpid",
-        "kern.openfiles"
+        "kern.openfiles",
+        "kern.cp_time",
+        "kern.cp_times",
+        "vm.phys_free",
+        "debug.vn_io_faults",
+        "hw.usermem"
     ]
     for sysctl_name, sysctl_type in sysctl_types.items():
         current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
@@ -104,6 +109,13 @@ def test_sysctl_values(sysctl_types):
             isinstance(raw_value, freebsd_sysctl.types.OPAQUE),
             isinstance(raw_value, freebsd_sysctl.types.NODE),
             sysctl_name.endswith("counter"),
+            sysctl_name.startswith("vm."),
+            sysctl_name.startswith("vfs."),
+            sysctl_name.startswith("kstat."),
+            sysctl_name.startswith("dev."),
+            sysctl_name.startswith("kern.timecounter."),
+            sysctl_name.startswith("kern.tty_"),
+            sysctl_name.startswith("debug.num"),
             (sysctl_name in dynamic_sysctl_names)
         ]):
             continue
