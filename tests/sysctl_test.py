@@ -82,3 +82,17 @@ def test_sysctl_values(sysctl_types):
 			continue
 		else:
 			assert stdout == str(current_sysctl.value).strip()
+
+
+def test_sysctl_descriptions(sysctl_types):
+	for sysctl_name, sysctl_type in sysctl_types.items():
+		current_sysctl = sysctl.Sysctl(sysctl_name)
+
+		stdout = subprocess.check_output([
+			"/sbin/sysctl",
+			"-d",
+			"-n",
+			sysctl_name
+		]).strip().decode()
+
+		assert stdout == str(current_sysctl.description).strip()

@@ -168,6 +168,7 @@ class Sysctl:
     _fmt = typing.Optional[bytes]
     _size: typing.Optional[int]
     _value: typing.Optional[str]
+    _description: typing.Optional[str]
 
     def __init__(
         self,
@@ -180,6 +181,7 @@ class Sysctl:
         self._fmt = None
         self._size = None
         self._value = None
+        self._description = None
 
     @property
     def oid(self) -> typing.List[int]:
@@ -224,6 +226,12 @@ class Sysctl:
     @property
     def value(self) -> int:
         return self.raw_value.value
+
+    @property
+    def description(self) -> int:
+        if self._description is None:
+            self._description = self.oiddescription(self.oid)
+        return self._description
 
     def __query_kind_and_fmt(self) -> None:
         self._kind, self._fmt = self.oidfmt(self.oid)
@@ -335,6 +343,35 @@ class Sysctl:
         )
 
         return ctl_type(buf)
+
+    @staticmethod
+    def oiddescription(
+        oid: typing.List[int]
+    ) -> str:
+
+        qoid_len = (2 + len(oid))
+        qoid_type = ctypes.c_int * qoid_len
+        qoid = (qoid_type)(*([0, 5] + oid))
+        p_qoid = ctypes.POINTER(qoid_type)(qoid)
+
+        buf_type = ctypes.c_char * BUFSIZ
+        buf = buf_type()
+        p_buf = ctypes.POINTER(buf_type)(buf)
+        buf_void = ctypes.cast(p_buf, ctypes.c_void_p)
+
+        buf_length = ctypes.sizeof(buf)
+        p_buf_length = ctypes.POINTER(ctypes.c_int)(ctypes.c_int(buf_length))
+
+        sysctl.libc.dll.sysctl(
+            p_qoid,
+            qoid_len,
+            buf_void,
+            p_buf_length,
+            0,
+            0
+        )
+
+        return buf.value.decode()
 
     @property
     def ctl_type(self) -> CtlType:
