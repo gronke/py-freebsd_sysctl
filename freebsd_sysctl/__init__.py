@@ -25,7 +25,7 @@ import typing
 import ctypes
 import struct
 import enum
-import sysctl.libc
+import freebsd_sysctl.libc
 
 NULL_BYTES = b"\x00"
 CTL_MAXNAME = ctypes.c_uint(24)
@@ -271,7 +271,7 @@ class Sysctl:
         Res = ctypes.c_int*length.value
         res = (Res)()
 
-        sysctl.libc.dll.sysctl(
+        freebsd_sysctl.libc.dll.sysctl(
             p_oid,
             2,
             ctypes.POINTER(Res)(res),
@@ -299,7 +299,7 @@ class Sysctl:
         buf_length = ctypes.sizeof(buf)
         p_buf_length = ctypes.POINTER(ctypes.c_int)(ctypes.c_int(buf_length))
 
-        sysctl.libc.dll.sysctl(
+        freebsd_sysctl.libc.dll.sysctl(
             p_qoid,
             qoid_len,
             buf_void,
@@ -325,7 +325,7 @@ class Sysctl:
         length = ctypes.c_int()
         p_length = ctypes.POINTER(ctypes.c_int)(length)
 
-        sysctl.libc.dll.sysctl(
+        freebsd_sysctl.libc.dll.sysctl(
             p_oid,
             len(oid),
             None,
@@ -356,7 +356,7 @@ class Sysctl:
         buf_length = ctypes.sizeof(buf)
         p_buf_length = ctypes.POINTER(ctypes.c_int)(ctypes.c_int(buf_length))
 
-        sysctl.libc.dll.sysctl(
+        freebsd_sysctl.libc.dll.sysctl(
             p_oid,
             ctypes.c_uint32(len(oid)),
             p_buf_void,
@@ -385,7 +385,7 @@ class Sysctl:
         buf_length = ctypes.sizeof(buf)
         p_buf_length = ctypes.POINTER(ctypes.c_int)(ctypes.c_int(buf_length))
 
-        sysctl.libc.dll.sysctl(
+        freebsd_sysctl.libc.dll.sysctl(
             p_qoid,
             qoid_len,
             buf_void,

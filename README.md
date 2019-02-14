@@ -1,4 +1,4 @@
-# py-freebsd-sysctl
+# py-freebsd_sysctl
 
 > A native Python module for FreeBSD sysctl.
 
@@ -6,12 +6,12 @@ This Python 3 interface for FreeBSD sysctl has no third party dependency and doe
 
 
 ```python3
->>> import sysctl
->>> sysctl.Sysctl("security.jail.enforce_statfs").value
+>>> from freebsd_sysctl import Sysctl
+>>> Sysctl("security.jail.enforce_statfs").value
 2
->>> sysctl.Sysctl("security.jail.enforce_statfs").ctl_type
-<class 'sysctl.IntType'>
->>> sysctl.Sysctl("security.jail.enforce_statfs").description
+>>> Sysctl("security.jail.enforce_statfs").ctl_type
+<class 'freebsd_sysctl.IntType'>
+>>> Sysctl("security.jail.enforce_statfs").description
 'Processes in jail cannot see all mounted file systems (deprecated)'
 ```
 
