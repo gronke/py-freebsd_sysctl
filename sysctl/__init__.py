@@ -338,10 +338,3 @@ class Sysctl:
     @staticmethod
     def get_ctl_type(kind: int, fmt: bytes) -> CtlType:
         return identify_type(kind, fmt)
-
-
-# Sysctl("security.jail.enforce_statfs")
-# Sysctl("security.jail.param.host.hostuuid")
-# Sysctl("security.jail.param.path")
-# Sysctl("security.jail.param.osrelease")
-# Sysctl("security.jail.param.children.max")
