@@ -172,7 +172,7 @@ def identify_type(kind: int, fmt: bytes) -> CtlType:
     elif ctl_type == 11:
         return U16
     elif ctl_type == 12:
-        return S16
+        return S8
     elif ctl_type == 13:
         return S16
     elif ctl_type == 14:
