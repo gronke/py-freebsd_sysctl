@@ -70,7 +70,7 @@ class Sysctl:
         if self._name is None:
             if self.oid is None:
                 raise ValueError("Name or OID required")
-            raise NotImplementedError("Missing oid2name resolution") 
+            self._name = self.oid2name(self.oid)
         return self._name
 
     @property
@@ -133,6 +133,31 @@ class Sysctl:
 
         oid_length = int(length.value / ctypes.sizeof(ctypes.c_int))
         return res[:oid_length]
+
+    @staticmethod
+    def oid2name(oid: typing.List[int]) -> str:
+        qoid_len = (2 + len(oid))
+        qoid_type = ctypes.c_int * qoid_len
+        qoid = (qoid_type)(*([0, 1] + oid))
+        p_qoid = ctypes.POINTER(qoid_type)(qoid)
+
+        #buf_type = ctypes.c_char * BUFSIZ
+        #buf = buf_type()
+        buf = ctypes.create_string_buffer(BUFSIZ)
+        buf_void = ctypes.cast(buf, ctypes.c_void_p)
+
+        buf_length = ctypes.sizeof(buf)
+        p_buf_length = ctypes.POINTER(ctypes.c_int)(ctypes.c_int(buf_length))
+
+        freebsd_sysctl.libc.dll.sysctl(
+            p_qoid,
+            qoid_len,
+            buf_void,
+            p_buf_length,
+            0,
+            0
+        )
+        return buf.value.decode()
 
     @staticmethod
     def query_fmt(oid: typing.List[int]) -> bytes:

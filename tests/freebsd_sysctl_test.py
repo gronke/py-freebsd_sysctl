@@ -77,7 +77,8 @@ def map_sysctl_type(ctl_type: freebsd_sysctl.types.CtlType) -> str:
 def test_sysctl_names(sysctl_types):
     for sysctl_name, sysctl_type in sysctl_types.items():
         current_sysctl = freebsd_sysctl.Sysctl(sysctl_name)
-        assert sysctl_name == current_sysctl.name
+        resolved_sysctl = freebsd_sysctl.Sysctl(oid=current_sysctl.oid)
+        assert sysctl_name == resolved_sysctl.name
 
 
 def test_sysctl_types(sysctl_types):
