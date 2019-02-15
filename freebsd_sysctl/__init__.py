@@ -107,6 +107,19 @@ class Sysctl:
             self._description = self.query_description(self.oid)
         return self._description
 
+    @property
+    def next(self):
+        return Sysctl(oid=self.query_next(self.oid))
+
+    @property
+    def children(self) -> typing.Iterator['Sysctl']:
+        if self.ctl_type != freebsd_sysctl.types.NODE:
+            return
+        current = self.next
+        while self.oid == current.oid[:len(self.oid)]:
+            yield current
+            current = current.next
+
     def __query_kind_and_fmt(self) -> None:
         self._kind, self._fmt = self.query_fmt(self.oid)
 
@@ -141,8 +154,6 @@ class Sysctl:
         qoid = (qoid_type)(*([0, 1] + oid))
         p_qoid = ctypes.POINTER(qoid_type)(qoid)
 
-        #buf_type = ctypes.c_char * BUFSIZ
-        #buf = buf_type()
         buf = ctypes.create_string_buffer(BUFSIZ)
         buf_void = ctypes.cast(buf, ctypes.c_void_p)
 
@@ -274,6 +285,36 @@ class Sysctl:
         )
 
         return buf.value.decode()
+
+    @staticmethod
+    def query_next(oid: typing.List[int]) -> bytes:
+
+        qoid_len = (2 + len(oid))
+        qoid_type = ctypes.c_int * qoid_len
+        qoid = (qoid_type)(*([0, 2] + oid))
+        p_qoid = ctypes.POINTER(qoid_type)(qoid)
+
+        buf_type = ctypes.c_int * CTL_MAXNAME.value
+        buf = buf_type()
+        p_buf = ctypes.POINTER(buf_type)(buf)
+        buf_void = ctypes.cast(p_buf, ctypes.c_void_p)
+
+        buf_length = ctypes.sizeof(buf)
+        p_buf_length = ctypes.POINTER(ctypes.c_int)(ctypes.c_int(buf_length))
+
+        freebsd_sysctl.libc.dll.sysctl(
+            p_qoid,
+            qoid_len,
+            buf_void,
+            p_buf_length,
+            0,
+            0
+        )
+
+        oid_length = int(
+            p_buf_length.contents.value / ctypes.sizeof(ctypes.c_int)
+        )
+        return buf[0:oid_length]
 
     @property
     def ctl_type(self) -> freebsd_sysctl.types.CtlType:

@@ -152,3 +152,31 @@ def test_sysctl_descriptions(benchmark, sysctl_types):
         ]).decode().strip("\n")
 
         assert stdout == descriptions[sysctl_name], sysctl_name
+
+
+def test_security_jail_param_list(benchmark):
+    test_node_name = "security.jail.param"
+    stdout = subprocess.check_output([
+        "/sbin/sysctl",
+        "-N",
+        test_node_name
+    ]).strip().decode()
+    child_names = stdout.split("\n")
+    assert len(child_names) > 0, "test pre-condition"
+
+    def get_children(test_node_sysctl):
+        return list(test_node_sysctl.children)
+
+    test_node_children = benchmark(
+        get_children,
+        freebsd_sysctl.Sysctl(test_node_name)
+    )
+
+    assert len(test_node_children) == len(child_names), (
+        "different number of children reported"
+    )
+
+    test_node_child_names = [c.name for c in test_node_children]
+    assert all([a == b for a, b in zip(test_node_child_names, child_names)]), (
+        "the order of children or their names differed"
+    )
