@@ -11,7 +11,7 @@ It is meant for performant (read) access to sysctls, their type, value and descr
 >>> Sysctl("security.jail.enforce_statfs").value
 2
 >>> Sysctl("security.jail.enforce_statfs").ctl_type
-<class 'freebsd_sysctl.IntType'>
+<class 'freebsd_sysctl.types.INT'>
 >>> Sysctl("security.jail.enforce_statfs").description
 'Processes in jail cannot see all mounted file systems (deprecated)'
 ```
