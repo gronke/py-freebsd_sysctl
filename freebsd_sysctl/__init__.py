@@ -109,7 +109,7 @@ class Sysctl:
 
     @property
     def next(self):
-        return Sysctl(oid=self.query_next(self.oid))
+        return self.__class__(oid=self.query_next(self.oid))
 
     @property
     def children(self) -> typing.Iterator['Sysctl']:
