@@ -27,6 +27,7 @@ import struct
 import enum
 import freebsd_sysctl.libc
 import freebsd_sysctl.types
+import freebsd_sysctl.flags
 
 NULL_BYTES = b"\x00"
 CTL_MAXNAME = ctypes.c_uint(24)
@@ -327,3 +328,6 @@ class Sysctl:
     ) -> freebsd_sysctl.types.CtlType:
         return freebsd_sysctl.types.identify_type(kind, fmt)
 
+    def has_flag(self, flag: int) -> bool:
+        """Return is the sysctl has a certain flag."""
+        return (self.kind & flag == flag) is True
