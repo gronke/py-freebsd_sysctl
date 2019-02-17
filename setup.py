@@ -5,16 +5,22 @@ import os.path
 import sys
 from setuptools import find_packages, setup
 
+cwd = os.getcwd()
 
 about = {}
-with open(os.path.join(os.getcwd(), "freebsd_sysctl", '__version__.py')) as f:
+with open(os.path.join(cwd, "freebsd_sysctl", '__version__.py')) as f:
     VERSION = exec(f.read(), about)
+
+with open(os.path.join(cwd, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 
 setup(
 	name="freebsd_sysctl",
 	version=about['__version__'],
 	description="A native Python module for FreeBSD sysctl.",
+	long_description=long_description,
+	long_description_content_type="text/markdown",
 	url="https://github.com/gronke/py-freebsd_sysctl",
 	author="Stefan Grönke",
 	author_email="stefan@gronke.net",
