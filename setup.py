@@ -8,7 +8,8 @@ from setuptools import find_packages, setup
 cwd = os.getcwd()
 
 about = {}
-with open(os.path.join(cwd, "freebsd_sysctl", '__version__.py')) as f:
+version_file = os.path.join(os.getcwd(), "freebsd_sysctl", '__version__.py')
+with open(version_file, encoding="utf-8") as f:
     VERSION = exec(f.read(), about)
 
 with open(os.path.join(cwd, 'README.md'), encoding='utf-8') as f:
