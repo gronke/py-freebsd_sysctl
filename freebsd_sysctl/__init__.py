@@ -95,7 +95,7 @@ class Sysctl:
     @property
     def raw_value(self) -> int:
         if self._value is None:
-            self._value = self.qurty_value(self.oid, self.size, self.ctl_type)
+            self._value = self.query_value(self.oid, self.size, self.ctl_type)
         return self._value
 
     @property
@@ -227,7 +227,7 @@ class Sysctl:
         return max(length.value, ctl_type.min_size)
 
     @staticmethod
-    def qurty_value(
+    def query_value(
         oid: typing.List[int],
         size: int,
         ctl_type: freebsd_sysctl.types.CtlType
