@@ -67,7 +67,9 @@ class CtlType:
 
 
 class NODE(CtlType):
-    pass
+    ctype = ctypes.c_uint
+    min_size = ctypes.sizeof(ctypes.c_uint)
+    unpack_format = "I"
 
 
 class INT(CtlType):
