@@ -26,7 +26,6 @@ setup(
 	author="Stefan Grönke",
 	author_email="stefan@gronke.net",
 	python_requires=">=3.6",
-	setup_requires=["pytest-runner"],
-	tests_require=["pytest"],
+	tests_require=["pytest-runner", "pytest"],
 	packages=find_packages(exclude=('tests',))
 )
