@@ -17,7 +17,7 @@ with open(os.path.join(cwd, 'README.md'), encoding='utf-8') as f:
 
 
 setup(
-	name="freebsd_sysctl",
+	name="freebsd-sysctl",
 	version=about['__version__'],
 	description="A native Python module for FreeBSD sysctl.",
 	long_description=long_description,
