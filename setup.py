@@ -19,7 +19,7 @@ with open(os.path.join(cwd, 'README.md'), encoding='utf-8') as f:
 setup(
 	name="freebsd-sysctl",
 	version=about['__version__'],
-	description="A native Python module for FreeBSD sysctl.",
+	description="Native Python wrapper for FreeBSD sysctls using libc.",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	url="https://github.com/gronke/py-freebsd_sysctl",
