@@ -1,6 +1,6 @@
 # py-freebsd_sysctl
 
-> A native Python module for FreeBSD sysctl.
+> Native Python wrapper for FreeBSD sysctls using libc.
 
 This Python 3 interface for FreeBSD sysctl has no third party dependency and does not require a compile step to install.
 It is meant for performant (read) access to sysctls, their type, value and description.
