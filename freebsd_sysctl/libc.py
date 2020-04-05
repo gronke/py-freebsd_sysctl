@@ -22,5 +22,4 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import ctypes.util
-clib = ctypes.util.find_library("c")
-dll = ctypes.CDLL(clib)
+dll = ctypes.CDLL("libc.so")
