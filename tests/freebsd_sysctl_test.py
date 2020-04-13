@@ -120,7 +120,7 @@ def test_sysctl_values(benchmark, sysctl_types):
             sysctl_name.startswith("dev."),
             sysctl_name.startswith("kern.timecounter."),
             sysctl_name.startswith("kern.tty_"),
-            sysctl_name.startswith("debug.num"),
+            sysctl_name.startswith("debug"),
             (sysctl_name in dynamic_sysctl_names)
         ]):
             continue
