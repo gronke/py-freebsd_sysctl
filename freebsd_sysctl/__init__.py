@@ -100,13 +100,13 @@ class Sysctl:
 
     @property
     def value(self) -> int:
-        return self.raw_value.value
+        return self.raw_value.value.strip("\n")
 
     @property
-    def description(self) -> int:
+    def description(self) -> str:
         if self._description is None:
             self._description = self.query_description(self.oid)
-        return self._description
+        return self._description.strip("\n")
 
     @property
     def next(self):
