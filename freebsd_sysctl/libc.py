@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Stefan Grönke
+# Copyright (c) 2020, Stefan Grönke
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,5 +21,9 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import ctypes.util
-dll = ctypes.CDLL("libc.so")
+import ctypes
+try:
+    dll = ctypes.CDLL("libc.so.7")
+except OSError:
+    import ctypes.util
+    dll = ctypes.CDLL(str(ctypes.util.find_library("c")), use_errno=True)
