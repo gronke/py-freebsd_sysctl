@@ -1,7 +1,7 @@
 name: 'Main Workflow'
-on: push
+on: [push]
 jobs:
-  check:
+  checks:
     name: 'Check Code Style'
     runs-on: ubuntu-latest
     steps:
@@ -13,13 +13,14 @@ jobs:
     - run: python -c "import sys; print(sys.version)"
     - run: pwd
     - run: ls -al
-  dist:
+  sdist:
     name: "Bundle Distribution"
     runs-on: ubuntu-latest
+    steps:
+    - run: echo "Build the Distribution"
   deploy:
     name: "Deploy Release"
     runs-on: ubuntu-latest
-    needs: [check, dist]
+    needs: [checks, sdist]
     steps:
-    - run: |
-      echo "Upload Distribution"
+    - run: echo "Upload the Distribution"
