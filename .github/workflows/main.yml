@@ -1,0 +1,28 @@
+name: 'Main Workflow'
+on:
+  push:
+    branches:
+      - 'chore/github-workflow'
+    tags:
+      - '*'
+jobs:
+  check:
+    name: 'Check Code Style'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.X'
+    - run: echo 'This could be your code style check'
+    - run: python -c "import sys; print(sys.version)"
+    - run: pwd
+    - run: ls -al
+  dist:
+    name: "Bundle Distribution"
+  deploy:
+    name: "Deploy Release"
+    needs: [check, dist]
+    steps:
+    - run: |
+      echo "Upload Distribution"
