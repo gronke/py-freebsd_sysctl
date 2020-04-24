@@ -1,4 +1,6 @@
-## 0.11.0 - 2020-04-23
+## CURRENT
+
+Note that we're bumping the version to 0.11.0, because we believe that the amount of automation we're putting into testing and releasing no longer justifies two zeros.
 
 ### Added
 
@@ -7,7 +9,6 @@
 
 ### Changed
 
-- bumped version to 0.11.0, because of all the changes
 - [speedup loading of C library](https://github.com/gronke/py-freebsd_sysctl/pull/4)
 
 ### Fixed
