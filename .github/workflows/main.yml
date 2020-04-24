@@ -2,6 +2,7 @@ name: 'Main Workflow'
 on: [push]
 env:
   module_name: "freebsd-sysctl"
+  deployment_trigger_repo: "gronke/__deploy-pip"
 jobs:
   checks:
     name: 'Code Style'
@@ -46,10 +47,8 @@ jobs:
         name: "${{ env.module_name }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
         path: "dist/${{ env.module_name }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
         description: "${{ env.module_name }} v${{ steps.get_version.outputs.VERSION }}"
-  deploy:
-    name: "Deploy Release"
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    needs: [checks, sdist]
-    steps:
-    - run: echo "Upload the Distribution"
+    - run: >
+        curl -s https://api.github.com/repos/${{ env.deployment_trigger_repo }}/issues \
+          -H "Content-Type: application/vnd.github.v3.raw+json" \
+          -H "Authorization: token ${{ secrets.DEPLOY_BOT_TOKEN }}" \
+          -d '{ "title": "Created by a GitHub Action", "body": "Python Module: ${{ env.module_name }}\nVersion: ${{ steps.get_version.outputs.VERSION }}\nCommit: ${{ github.sha }}" }'
