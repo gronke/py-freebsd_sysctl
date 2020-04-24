@@ -12,4 +12,4 @@
 
 ### Fixed
 
-- We're now ignoring the entire `debug.` space, because it was causing a lot of trouble with parsing
+- ignore `debug.` space in tests because of inconsistent line termination
