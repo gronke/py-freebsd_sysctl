@@ -2,7 +2,6 @@ name: 'Main Workflow'
 on: [push]
 env:
   module_name: "freebsd-sysctl"
-  deployment_trigger_repo: "gronke/__deploy-pip"
 jobs:
   checks:
     name: 'Code Style'
