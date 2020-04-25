@@ -42,7 +42,14 @@ jobs:
       run: echo ::set-output name=VERSION::$(python -c "import freebsd_sysctl.__version__; print('.'.join([str(n) for n in freebsd_sysctl.__version__.VERSION]))")
     - name: Read Changelog
       id: get_changelog
-      run: cat CHANGELOG.md | sed -n -e '/^## CURRENT/,$p' | tail -n +2 | sed -n -e '1,/^## /p' | grep -v "^## " | sed '/[a-z]/,$!d' | perl -p -e 'eof && chomp' 
+      run: |
+        CHANGELOG="$(cat CHANGELOG.md | sed -n -e '/^## CURRENT/,$p' | tail -n +2 | sed -n -e '1,/^## /p' | grep -v '^## ' | sed '/[a-z]/,$!d' | perl -p -e 'eof && chomp')"
+        CHANGELOG="${CHANGELOG//'%'/'%25'}"
+        CHANGELOG="${CHANGELOG//$'\r\n'/'%0A'}"
+        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+        CHANGELOG="${CHANGELOG//$'\r'/'%0A'}"
+        echo "$CHANGELOG"
+        echo "::set-output name=CHANGELOG::$CHANGELOG"
     - run: python setup.py sdist
     - uses: actions/upload-artifact@v1
       with:
@@ -57,6 +64,6 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release v${{ steps.get_version.outputs.VERSION }}
-        body: ${{ steps.get_changelog.outputs.data }}
+        body: ${{ steps.get_changelog.outputs.CHANGELOG }}
         draft: true
         prerelease: false
