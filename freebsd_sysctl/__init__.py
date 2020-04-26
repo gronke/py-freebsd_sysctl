@@ -28,6 +28,7 @@ import enum
 import freebsd_sysctl.libc
 import freebsd_sysctl.types
 import freebsd_sysctl.flags
+from freebsd_sysctl.__version__ import VERSION as __version__
 
 from freebsd_sysctl.__version__ import __version__
 
