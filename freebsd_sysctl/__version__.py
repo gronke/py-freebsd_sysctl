@@ -12,7 +12,7 @@ def read_first_line(relative_filename: str) -> str:
 
 try:
     VERSION = read_first_line("VERSION")
-except:
+except Exception:
     # last git commit SHA is the version
     line = read_first_line(".git/HEAD")
     if line.startswith("ref: ") is False:
