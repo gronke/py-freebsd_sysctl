@@ -1,0 +1,38 @@
+# Changes on master have passed CI tests.
+# When the CHANGELOG.md files contains no UNRELEASED changes, the commit is
+# considered a published as GitHub Release and propagated to the
+# deployment_trigger_repo.
+# Otherwise the commit is suggested as release candidate Pull-Request.
+
+name: 'Release'
+on:
+  pull_request:
+    branches:
+      - master
+    # ignore PR unless only CHANGELOG.md and VERSION have changed
+    paths-ignore:
+      - '*'
+      - '!CHANGELOG.md'
+      - '!VERSION'
+    types: [opened, edited, synchronize, reopened]
+jobs:
+  approve:
+    name: "Approve Pull-Request"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Verify 1 commit distance to master
+      run: |
+        BASE_SHA=$(python3 -c "import json; data=json.load(open('$GITHUB_EVENT_PATH', 'r', encoding='UTF-8')); print(data['pull_request']['base']['sha']);")
+        if [ $(git cherry $BASE_SHA | wc -l) -eq 1 ]; then echo OK; else echo "Only 1 commit allowed."; exit 1; fi
+    - uses: actions/setup-python@v1
+    - name: Approve Release Pull-Request
+      run: |
+        REVIEW_URL=$(python -c "import json; data=json.load(open('$GITHUB_EVENT_PATH', 'r', encoding='UTF-8')); print(data['pull_request']['url']);")
+        COMMIT_SHA=$(python -c "import json; data=json.load(open('$GITHUB_EVENT_PATH', 'r', encoding='UTF-8')); print(data['pull_request']['head']['sha']);")
+        curl -s "$REVIEW_URL/reviews" \
+          -H "Content-Type: application/vnd.github.v3.raw+json" \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -d "{ \"commit_id\": \"$(git rev-parse --verify HEAD)\", \"event\": \"APPROVE\" }"
