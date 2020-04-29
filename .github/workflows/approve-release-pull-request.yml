@@ -4,7 +4,7 @@
 # deployment_trigger_repo.
 # Otherwise the commit is suggested as release candidate Pull-Request.
 
-name: 'Release'
+name: 'Pull-Request Approval'
 on:
   pull_request:
     branches:
@@ -23,16 +23,17 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Verify 1 commit distance to master
-      run: |
-        BASE_SHA=$(python3 -c "import json; data=json.load(open('$GITHUB_EVENT_PATH', 'r', encoding='UTF-8')); print(data['pull_request']['base']['sha']);")
-        if [ $(git cherry $BASE_SHA | wc -l) -eq 1 ]; then echo OK; else echo "Only 1 commit allowed."; exit 1; fi
-    - uses: actions/setup-python@v1
     - name: Approve Release Pull-Request
+      if: github.event.sender.login == 'github-actions'
       run: |
-        REVIEW_URL=$(python -c "import json; data=json.load(open('$GITHUB_EVENT_PATH', 'r', encoding='UTF-8')); print(data['pull_request']['url']);")
-        COMMIT_SHA=$(python -c "import json; data=json.load(open('$GITHUB_EVENT_PATH', 'r', encoding='UTF-8')); print(data['pull_request']['head']['sha']);")
-        curl -s "$REVIEW_URL/reviews" \
+        if [ $(git cherry ${{ github.event.pull_request.base.sha }} | wc -l) -eq 1 ]; then
+          echo "Commit Distance OK";
+        else 
+          echo "Only 1 commit allowed.";
+          exit 1;
+        fi
+
+        curl -s "${{ github.event.pull_request.url }}/reviews" \
           -H "Content-Type: application/vnd.github.v3.raw+json" \
           -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -d "{ \"commit_id\": \"$(git rev-parse --verify HEAD)\", \"event\": \"APPROVE\" }"
