@@ -62,9 +62,7 @@ jobs:
         $RELEASE_CHANGES"
         export RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
         git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${{ github.repository }}.git"
-        git remote -v
         git push -f upstream HEAD:${{ env.release_candidate_branch }}
-        echo "{ \"title\": \"$RELEASE_TITLE\", \"body\": \"$RELEASE_CHANGES_ENCODED\", \"head\": \"${{ env.release_candidate_branch }}\", \"base\": \"${{ github.ref }}\", \"maintainer_can_modify\": false }"
     - name: Create GitHub Release
       id: create_release
       if: steps.is_release.outputs.STATUS == true
