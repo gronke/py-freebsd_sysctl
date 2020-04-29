@@ -38,13 +38,24 @@ jobs:
         python-version: "3.X"
     - name: Get Version
       id: get_version
-      run: echo ::set-output name=VERSION::$(python setup.py --version)
+      run: |
+        echo ::set-output name=NAME::$(python setup.py --name)
+        echo ::set-output name=VERSION::$(python setup.py --version)
     - name: Read Changelog
       id: get_changelog
       run: echo "::set-output name=CHANGELOG::$(python .github/scripts/changelog.py --version latest --percent-encode)"
     - name: Check Release-Candidate
       id: is_release
       run: echo "::set-output name=STATUS::$(python .github/scripts/changelog.py --version latest --version-only | grep -c -v UNRELEASED)"
+
+    # Build Artifacts
+    - run: python setup.py sdist
+    - uses: actions/upload-artifact@v1
+      with:
+        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
+        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
+        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.get_version.outputs.VERSION }}"
+
     - name: Suggest Release in Pull-Request
       if: steps.is_release.outputs.STATUS == false
       run: |
