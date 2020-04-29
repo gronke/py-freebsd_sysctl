@@ -26,7 +26,7 @@ import ctypes
 import struct
 import enum
 import freebsd_sysctl.libc
-import freebsd_sysctl.types
+import freebsd_sysctl.data_types
 import freebsd_sysctl.flags
 from freebsd_sysctl.__version__ import VERSION as __version__
 
@@ -117,7 +117,7 @@ class Sysctl:
 
     @property
     def children(self) -> typing.Iterator['Sysctl']:
-        if self.ctl_type != freebsd_sysctl.types.NODE:
+        if self.ctl_type != freebsd_sysctl.data_types.NODE:
             return
         current = self.next
         while self.oid == current.oid[:len(self.oid)]:
@@ -209,7 +209,7 @@ class Sysctl:
     @staticmethod
     def query_size(
         oid: typing.List[int],
-        ctl_type: freebsd_sysctl.types.CtlType
+        ctl_type: freebsd_sysctl.data_types.CtlType
     ) -> bytes:
 
         oid_type = ctypes.c_int * len(oid)
@@ -233,7 +233,7 @@ class Sysctl:
     def query_value(
         oid: typing.List[int],
         size: int,
-        ctl_type: freebsd_sysctl.types.CtlType
+        ctl_type: freebsd_sysctl.data_types.CtlType
     ) -> bytes:
 
         # ToDo: check if value is readable
@@ -321,15 +321,15 @@ class Sysctl:
         return buf[0:oid_length]
 
     @property
-    def ctl_type(self) -> freebsd_sysctl.types.CtlType:
+    def ctl_type(self) -> freebsd_sysctl.data_types.CtlType:
         return self.get_ctl_type(self.kind, self.fmt)
 
     @staticmethod
     def get_ctl_type(
         kind: int,
         fmt: bytes
-    ) -> freebsd_sysctl.types.CtlType:
-        return freebsd_sysctl.types.identify_type(kind, fmt)
+    ) -> freebsd_sysctl.data_types.CtlType:
+        return freebsd_sysctl.data_types.identify_type(kind, fmt)
 
     def has_flag(self, flag: int) -> bool:
         """Return is the sysctl has a certain flag."""
