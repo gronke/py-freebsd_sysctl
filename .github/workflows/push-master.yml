@@ -38,7 +38,7 @@ jobs:
         python-version: "3.X"
     - name: Get Version
       id: get_version
-      run: echo ::set-output name=VERSION::$(python freebsd_sysctl/__version__.py)
+      run: echo ::set-output name=VERSION::$(python setup.py --version)
     - name: Read Changelog
       id: get_changelog
       run: echo "::set-output name=CHANGELOG::$(python .github/scripts/changelog.py --version latest --percent-encode)"
