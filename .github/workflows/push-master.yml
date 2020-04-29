@@ -60,10 +60,10 @@ jobs:
       if: steps.is_release.outputs.STATUS == false
       run: |
         python .github/scripts/changelog.py --bump-version
-        export RELEASE_VERSION="$(python .github/scripts/changelog.py --version latest --version-only)"
-        export RELEASE_TITLE="Release $RELEASE_VERSION"
-        export RELEASE_CHANGES="$(python .github/scripts/changelog.py --version latest)"
-        export RELEASE_CHANGES_ENCODED="$(python .github/scripts/changelog.py --version latest --percent-encode)"
+        RELEASE_VERSION="$(python .github/scripts/changelog.py --version latest --version-only)"
+        RELEASE_TITLE="Release $RELEASE_VERSION"
+        RELEASE_CHANGES="$(python .github/scripts/changelog.py --version latest)"
+        RELEASE_CHANGES_ENCODED="$(python .github/scripts/changelog.py --version latest --percent-encode)"
         git config user.name "GitHub Action: ${{ github.workflow }}"
         git config user.email "github-action@${{ github.repository }}"
         echo "$RELEASE_VERSION" > VERSION
@@ -71,7 +71,7 @@ jobs:
         git commit -m "$RELEASE_TITLE
 
         $RELEASE_CHANGES"
-        export RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
+        RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
         git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${{ github.repository }}.git"
         git push -f upstream HEAD:${{ env.release_candidate_branch }}
     - name: Create GitHub Release
