@@ -50,14 +50,13 @@ jobs:
       run: |
         IS_RELEASE="$(python3 -m changelogmd --version latest --version-only | grep -v UNRELEASED | wc -l)"
         echo "::set-output name=STATUS::$IS_RELEASE"
-        echo "::set-output name=SUFFIX::$([ "$IS_RELEASE" -eq 1 ] && echo '-pre')"
     # Build Artifacts
     - run: python setup.py sdist
     - uses: actions/upload-artifact@v1
       with:
-        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}${{ steps.is_release.outputs.SUFFIX }}.tar.gz"
-        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}${{ steps.is_release.outputs.SUFFIX }}.tar.gz"
-        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.get_version.outputs.VERSION }}${{ steps.is_release.outputs.SUFFIX }}"
+        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
+        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
+        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.get_version.outputs.VERSION }}"
 
     - name: Suggest Release in Pull-Request
       if: steps.is_release.outputs.STATUS == false
