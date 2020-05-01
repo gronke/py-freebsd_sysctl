@@ -28,7 +28,7 @@ jobs:
     - run: python -m flake8 --exclude=".travis,.github,.eggs,__init__.py,tests"
     - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py freebsd_sysctl/*.py
   release:
-    name: "Bundle Distribution"
+    name: "Distribute"
     runs-on: ubuntu-latest
     needs: checks
     steps:
@@ -46,15 +46,17 @@ jobs:
       run: echo "::set-output name=CHANGELOG::$(python .github/scripts/changelog.py --version latest --percent-encode)"
     - name: Check Release-Candidate
       id: is_release
-      run: echo "::set-output name=STATUS::$(python .github/scripts/changelog.py --version latest --version-only | grep -c -v UNRELEASED)"
-
+      run: |
+        IS_RELEASE="$(python .github/scripts/changelog.py --version latest --version-only | grep -c -v UNRELEASED)"
+        echo "::set-output name=STATUS::$IS_RELEASE"
+        echo "::set-output name=SUFFIX::$([ "$IS_RELEASE" -eq 1 ] && echo '-pre')"
     # Build Artifacts
     - run: python setup.py sdist
     - uses: actions/upload-artifact@v1
       with:
-        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
-        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
-        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.get_version.outputs.VERSION }}"
+        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}${{ steps.is_release.outputs.SUFFIX }}.tar.gz"
+        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}${{ steps.is_release.outputs.SUFFIX }}.tar.gz"
+        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.get_version.outputs.VERSION }}${{ steps.is_release.outputs.SUFFIX }}"
 
     - name: Suggest Release in Pull-Request
       if: steps.is_release.outputs.STATUS == false
@@ -66,14 +68,14 @@ jobs:
         RELEASE_CHANGES_ENCODED="$(python .github/scripts/changelog.py --version latest --percent-encode)"
         git config user.name "GitHub Action: ${{ github.workflow }}"
         git config user.email "github-action@${{ github.repository }}"
-        echo "$RELEASE_VERSION" > VERSION
-        git add CHANGELOG.md VERSION
+        git add CHANGELOG.md
         git commit -m "$RELEASE_TITLE
 
         $RELEASE_CHANGES"
         RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
         git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${{ github.repository }}.git"
         git push -f upstream HEAD:${{ env.release_candidate_branch }}
+
     - name: Create GitHub Release
       id: create_release
       if: steps.is_release.outputs.STATUS == true
@@ -86,6 +88,7 @@ jobs:
         body: ${{ steps.get_changelog.outputs.CHANGELOG }}
         draft: false
         prerelease: false
+
     - name: Publish Release
       if: steps.is_release.outputs.STATUS == true
       run: |

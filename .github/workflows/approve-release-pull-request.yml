@@ -9,11 +9,10 @@ on:
   pull_request:
     branches:
       - master
-    # ignore PR unless only CHANGELOG.md and VERSION have changed
+    # ignore PR unless only CHANGELOG.md has changed
     paths-ignore:
       - '*'
       - '!CHANGELOG.md'
-      - '!VERSION'
     types: [opened, edited, synchronize, reopened]
 jobs:
   approve:

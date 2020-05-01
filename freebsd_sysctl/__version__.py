@@ -1,25 +1,47 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import os.path
+import re
+
+# When a RELEASE file exists, the version is read from this file.
+# Otherwise the latest version from CHANGELOG.md is suffixed with -dev and
+# a git commit hash (if available).
+
+__dirname = os.path.dirname(__file__)
+__module_dir = os.path.join(__dirname, "..")
+__changelog_file = os.path.join(__module_dir, "CHANGELOG.md")
+__release_version_file = os.path.join(__dirname, ".version")
 
 
-def read_first_line(relative_filename: str) -> str:
-    __dirname = os.path.dirname(__file__)
-    absolute_path = os.path.join(__dirname, "../", relative_filename)
+def __read_first_line(relative_filename: str) -> str:
+    absolute_path = os.path.join(__module_dir, relative_filename)
     with open(absolute_path, "r", encoding="UTF-8") as f:
         return f.readline().strip()
 
 
-try:
-    VERSION = read_first_line("VERSION")
-except Exception:
-    # last git commit SHA is the version
-    line = read_first_line(".git/HEAD")
-    if line.startswith("ref: ") is False:
-        VERSION = line
-    else:
-        ref = line[5:]
-        VERSION = read_first_line(f".git/{ref}")
+COMMIT = None
+if os.path.isfile(__release_version_file) is True:
+    __version__ = __read_first_line(__release_version_file)
+else:
+    # get latest semver from CHANGELOG.md
+    __version_pattern = re.compile(r"## \[([0-9]+\.[0-9]+\.[0-9]+)\]")
+    with open(__changelog_file, "r", encoding="UTF-8") as f:
+        __version__ = __version_pattern.findall(f.read())[0]
+
+    # dev version
+    __version__ += "-dev"
+
+    # append current git commit
+    if os.path.isfile(".git/HEAD") is True:
+        line = __read_first_line(".git/HEAD")
+        __version__ += "-"
+        if line.startswith("ref: ") is False:
+            COMMIT = line
+            __version__ += line[:8]
+        else:
+            ref = line[5:]
+            COMMIT = __read_first_line(f".git/{ref}")
+            __version__ += COMMIT[:8]
 
 if __name__ == "__main__":
     print(VERSION)
