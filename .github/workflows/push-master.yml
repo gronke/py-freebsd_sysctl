@@ -22,6 +22,7 @@ jobs:
       with:
         python-version: "3.X"
     - run: python -m ensurepip
+    - run: python -m pip install -U changelogmd
     - run: python -m pip install -U -r requirements-dev.txt
     - run: python -m flake8 --version
     - run: python -m mypy --version
@@ -43,11 +44,11 @@ jobs:
         echo ::set-output name=VERSION::$(python setup.py --version)
     - name: Read Changelog
       id: get_changelog
-      run: echo "::set-output name=CHANGELOG::$(python .github/scripts/changelog.py --version latest --percent-encode)"
+      run: echo "::set-output name=CHANGELOG::$(python3 -m changelogmd --version latest --percent-encode)"
     - name: Check Release-Candidate
       id: is_release
       run: |
-        IS_RELEASE="$(python .github/scripts/changelog.py --version latest --version-only | grep -c -v UNRELEASED)"
+        IS_RELEASE="$(python3 -m changelogmd --version latest --version-only | grep -v UNRELEASED | wc -l)"
         echo "::set-output name=STATUS::$IS_RELEASE"
         echo "::set-output name=SUFFIX::$([ "$IS_RELEASE" -eq 1 ] && echo '-pre')"
     # Build Artifacts
@@ -61,11 +62,11 @@ jobs:
     - name: Suggest Release in Pull-Request
       if: steps.is_release.outputs.STATUS == false
       run: |
-        python .github/scripts/changelog.py --bump-version
-        RELEASE_VERSION="$(python .github/scripts/changelog.py --version latest --version-only)"
+        python3 -m changelogmd --bump-version
+        RELEASE_VERSION="$(python3 -m changelogmd --version latest --version-only)"
         RELEASE_TITLE="Release $RELEASE_VERSION"
-        RELEASE_CHANGES="$(python .github/scripts/changelog.py --version latest)"
-        RELEASE_CHANGES_ENCODED="$(python .github/scripts/changelog.py --version latest --percent-encode)"
+        RELEASE_CHANGES="$(python3 -m changelogmd --version latest)"
+        RELEASE_CHANGES_ENCODED="$(python3 -m changelogmd --version latest --percent-encode)"
         git config user.name "GitHub Action: ${{ github.workflow }}"
         git config user.email "github-action@${{ github.repository }}"
         git add CHANGELOG.md
@@ -92,7 +93,7 @@ jobs:
     - name: Publish Release
       if: steps.is_release.outputs.STATUS == true
       run: |
-        CHANGELOG_BODY="$(python .github/scripts/changelog.py --percent-encode)"
+        CHANGELOG_BODY="$(python3 -m changelogmd --percent-encode)"
         curl -s https://api.github.com/repos/${{ env.deployment_trigger_repo }}/issues \
           -H "Content-Type: application/vnd.github.v3.raw+json" \
           -H "Authorization: token ${{ secrets.DEPLOY_BOT_TOKEN }}" \
