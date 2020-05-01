@@ -12,6 +12,7 @@ on:
 env:
   deployment_trigger_repo: "gronke/__deploy-pip"
   release_candidate_branch: "release-candidate"
+  python_module_name: "freebsd_sysctl"
 jobs:
   checks:
     name: "Code Style"
@@ -26,7 +27,7 @@ jobs:
     - run: python -m flake8 --version
     - run: python -m mypy --version
     - run: python -m flake8 --exclude=".travis,.github,.eggs,__init__.py,tests"
-    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py freebsd_sysctl/*.py
+    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py ${{ env.python_module_name }}/*.py
   release:
     name: "Distribute"
     runs-on: ubuntu-latest
@@ -48,8 +49,7 @@ jobs:
     - name: Check Release-Candidate
       id: is_release
       run: |
-        IS_RELEASE="$(python3 -m changelogmd --version latest --version-only | grep -v UNRELEASED | wc -l)"
-        echo "::set-output name=STATUS::$IS_RELEASE"
+        echo "::set-output name=STATUS::$(python3 -m changelogmd --version latest --version-only | grep -v UNRELEASED | wc -l)"
     # Build Artifacts
     - run: python setup.py sdist
     - uses: actions/upload-artifact@v1
@@ -92,9 +92,12 @@ jobs:
     - name: Publish Release
       if: steps.is_release.outputs.STATUS == true
       run: |
-        CHANGELOG_BODY="$(python3 -m changelogmd --percent-encode)"
+        CHANGELOG_BODY="$(python3 -m changelogmd --version latest --percent-encode)"
+        RELEASE_VERSION="$(python3 -m changelogmd --version latest --version-only)"
+        POST_DATA="{ \"title\": \"Created by a GitHub Action\", \"body\": \"Repository: ${{ github.repository }}\nVersion: $RELEASE_VERSION\nCommit: ${{ github.sha }}\n\n# Changelog\n$CHANGELOG_BODY\" }"
+        echo "$POST_DATA"
         curl -s https://api.github.com/repos/${{ env.deployment_trigger_repo }}/issues \
           -H "Content-Type: application/vnd.github.v3.raw+json" \
           -H "Authorization: token ${{ secrets.DEPLOY_BOT_TOKEN }}" \
-          -d '{ "title": "Created by a GitHub Action", "body": "Repository: ${{ github.repository }}\nVersion: ${{ steps.get_version.outputs.VERSION }}\nCommit: ${{ github.sha }}\n\n## Changelog\n${{ steps.get_changelog.outputs.CHANGELOG }}" }'
+          -d "$POST_DATA"
 
