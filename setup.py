@@ -68,3 +68,6 @@ setup(
         sdist=SdistCommand
     )
 )
+
+if __name__ == "__main__":
+    setup(**config)
