@@ -23,7 +23,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Approve Release Pull-Request
-      if: github.event.sender.login == 'github-actions'
+      #if: github.event.sender.login == 'github-actions'
       run: |
         if [ $(git cherry ${{ github.event.pull_request.base.sha }} | wc -l) -eq 1 ]; then
           echo "Commit Distance OK";
