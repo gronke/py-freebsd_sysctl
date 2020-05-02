@@ -60,8 +60,28 @@ jobs:
 
     - name: Check Release-Candidate
       id: is_release
+      env:
+        DETECTED_VERSION: ${{ steps.get_version.outputs.VERSION }}
       run: |
-        echo "::set-output name=STATUS::$(python3 -m changelogmd --version latest --version-only | grep -v UNRELEASED | wc -l)"
+        python3 <<___EOF
+        import os
+        import changelogmd
+        latest_version = changelogmd.Changelog().versions[0]
+        is_release = (str(latest_version.version) != "UNRELEASED")
+        print(f"::set-output name=STATUS::{str(1 * is_release)}")
+        if is_release is False:
+          print(f"::set-output name=VERSION::{os.environ['DETECTED_VERSION']}")
+        else:
+          print("Release candidate detected.")
+          print(f"::set-output name=VERSION::{str(latest_version.version)}")
+          import setup
+          for package in setup.config["packages"]:
+            version_file_path = f"{package}/.version"
+            with open(version_file_path, "w", encoding="UTF-8") as f:
+              f.write(str(latest_version.version))
+              f.truncate()
+              print(f"Static .version file created for '{package}' package")
+        ___EOF
 
     - name: Bundle Source Distribution
       run: python setup.py sdist
@@ -69,9 +89,9 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
-        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
-        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.get_version.outputs.VERSION }}"
+        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.is_release.outputs.VERSION }}"
 
     - name: Suggest Release in Pull-Request
       if: steps.is_release.outputs.STATUS == false
@@ -94,8 +114,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.get_version.outputs.VERSION }}
-        release_name: Release v${{ steps.get_version.outputs.VERSION }}
+        tag_name: ${{ steps.is_release.outputs.VERSION }}
+        release_name: Release v${{ steps.is_release.outputs.VERSION }}
         body: ${{ steps.get_changelog.outputs.CHANGELOG }}
         draft: false
         prerelease: false
