@@ -41,8 +41,14 @@ jobs:
     - name: Get Version
       id: get_version
       run: |
-        echo ::set-output name=NAME::$(python setup.py --name)
-        echo ::set-output name=VERSION::$(python setup.py --version)
+        python3 <<___EOF
+        import setup
+        setup.config["name"]
+        NAME=setup.config["name"].replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        VERSION=setup.config["version"].replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        print(f"::set-output name=NAME::{NAME}")
+        print(f"::set-output name=VERSION::{VERSION}")
+        ___EOF
 
     - name: Install Tools
       run: python -m pip install -U changelogmd requests
@@ -53,9 +59,9 @@ jobs:
         python3 <<___EOF
         import changelogmd
         latest_version = changelogmd.Changelog().versions[0]
-        text = str(latest_version.text)
-        text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "%0A")
-        print(f"::set-output name=CHANGELOG::{text}")
+        text = str(latest_version.text).replace("\r\n", "\n").replace("\r", "\n")
+        CHANGELOG = text.replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        print(f"::set-output name=CHANGELOG::{CHANGELOG}")
         ___EOF
 
     - name: Check Release-Candidate
@@ -70,10 +76,10 @@ jobs:
         is_release = (str(latest_version.version) != "UNRELEASED")
         print(f"::set-output name=STATUS::{str(1 * is_release)}")
         if is_release is False:
-          print(f"::set-output name=VERSION::{os.environ['DETECTED_VERSION']}")
+          VERSION = os.environ["DETECTED_VERSION"].replace("\r","").replace("%", "%25").replace("\n", "%0A")
         else:
           print("Release candidate detected.")
-          print(f"::set-output name=VERSION::{str(latest_version.version)}")
+          VERSION = str(latest_version.version).replace("\r","").replace("%", "%25").replace("\n", "%0A")
           import setup
           for package in setup.config["packages"]:
             version_file_path = f"{package}/.version"
@@ -81,6 +87,7 @@ jobs:
               f.write(str(latest_version.version))
               f.truncate()
               print(f"Static .version file created for '{package}' package")
+        print(f"::set-output name=VERSION::{VERSION}")
         ___EOF
 
     - name: Bundle Source Distribution
