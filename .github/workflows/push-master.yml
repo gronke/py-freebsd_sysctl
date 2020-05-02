@@ -27,7 +27,7 @@ jobs:
     - run: python -m flake8 --version
     - run: python -m mypy --version
     - run: python -m flake8 --exclude=".travis,.github,.eggs,__init__.py,tests"
-    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py "${{ env.PYTHON_MODULE_NAME }}/*.py"
+    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py "${PYTHON_MODULE_NAME}/*.py"
   release:
     name: "Release"
     runs-on: ubuntu-latest
@@ -104,15 +104,15 @@ jobs:
       if: steps.is_release.outputs.STATUS == false
       run: |
         python3 -m changelogmd --bump-version
-        git config user.name "GitHub Action: ${{ github.workflow }}"
-        git config user.email "github-action@${{ github.repository }}"
+        git config user.name "GitHub Action: $GITHUB_WORKFLOW"
+        git config user.email "github-action@$GITHUB_REPOSITORY"
         git add CHANGELOG.md
         git commit -m "Release $(python3 -m changelogmd --version latest --version-only)
 
         $(python3 -m changelogmd --version latest)"
         RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
-        git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${{ github.repository }}.git"
-        git push -f upstream "HEAD:${{ env.RELEASE_CANDIDATE_BRANCH }}"
+        git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${GITHUB_REPOSITORY}.git"
+        git push -f upstream "HEAD:$RELEASE_CANDIDATE_BRANCH"
 
     - name: Create GitHub Release
       id: create_release
@@ -142,7 +142,7 @@ jobs:
         api_token = os.environ["DEPLOY_BOT_TOKEN"]
         current_repo = os.environ["GITHUB_REPOSITORY"]
         deployment_trigger_repo = os.environ["DEPLOYMENT_TRIGGER_REPO"]
-        source_repo = "${{ github.repository }}"
+        source_repo = "$GITHUB_REPOSITORY"
         module_name = setup.config["name"]
         post_data = dict(
           title=f"{source_repo} Release {str(latest_version.version)}",
@@ -150,7 +150,7 @@ jobs:
             f"Module: [{module_name}](https://pypi.org/project/{module_name})",
             f"Repository: {current_repo}",
             f"Version: {str(latest_version.version)}",
-            "Commit: ${{ github.sha }}",
+            "Commit: $GITHUB_SHA",
             "\n - ".join([
               "Packages:",
             ] + list(setup.config["packages"])),
