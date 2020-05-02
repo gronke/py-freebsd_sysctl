@@ -1,7 +1,7 @@
 # Changes on master have passed CI tests.
 # When the CHANGELOG.md files contains no UNRELEASED changes, the commit is
 # considered a published as GitHub Release and propagated to the
-# deployment_trigger_repo.
+# DEPLOYMENT_TRIGGER_REPO.
 # Otherwise the commit is suggested as release candidate Pull-Request.
 
 name: 'master'
@@ -10,9 +10,9 @@ on:
     branches:
       - master
 env:
-  deployment_trigger_repo: "gronke/__deploy-pip"
-  release_candidate_branch: "release-candidate"
-  python_module_name: "freebsd_sysctl"
+  DEPLOYMENT_TRIGGER_REPO: "gronke/__deploy-pip"
+  RELEASE_CANDIDATE_BRANCH: "release-candidate"
+  PYTHON_MODULE_NAME: "freebsd_sysctl"
 jobs:
   checks:
     name: "Code Style"
@@ -27,7 +27,7 @@ jobs:
     - run: python -m flake8 --version
     - run: python -m mypy --version
     - run: python -m flake8 --exclude=".travis,.github,.eggs,__init__.py,tests"
-    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py ${{ env.python_module_name }}/*.py
+    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py "${{ env.PYTHON_MODULE_NAME }}/*.py"
   release:
     name: "Distribute"
     runs-on: ubuntu-latest
@@ -37,22 +37,37 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: "3.X"
-    - run: python -m pip install -U changelogmd
+
     - name: Get Version
       id: get_version
       run: |
         echo ::set-output name=NAME::$(python setup.py --name)
         echo ::set-output name=VERSION::$(python setup.py --version)
+
+    - name: Install Tools
+      run: python -m pip install -U changelogmd requests
+
     - name: Read Changelog
       id: get_changelog
-      run: echo "::set-output name=CHANGELOG::$(python3 -m changelogmd --version latest --percent-encode)"
+      run: |
+        python3 <<___EOF
+        import changelogmd
+        latest_version = changelogmd.Changelog().versions[0]
+        text = str(latest_version.text)
+        text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "%0A")
+        print(f"::set-output name=CHANGELOG::{text}")
+        ___EOF
+
     - name: Check Release-Candidate
       id: is_release
       run: |
         echo "::set-output name=STATUS::$(python3 -m changelogmd --version latest --version-only | grep -v UNRELEASED | wc -l)"
-    # Build Artifacts
-    - run: python setup.py sdist
-    - uses: actions/upload-artifact@v1
+
+    - name: Bundle Source Distribution
+      run: python setup.py sdist
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v1
       with:
         name: "${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
         path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.get_version.outputs.VERSION }}.tar.gz"
@@ -62,19 +77,15 @@ jobs:
       if: steps.is_release.outputs.STATUS == false
       run: |
         python3 -m changelogmd --bump-version
-        RELEASE_VERSION="$(python3 -m changelogmd --version latest --version-only)"
-        RELEASE_TITLE="Release $RELEASE_VERSION"
-        RELEASE_CHANGES="$(python3 -m changelogmd --version latest)"
-        RELEASE_CHANGES_ENCODED="$(python3 -m changelogmd --version latest --percent-encode)"
         git config user.name "GitHub Action: ${{ github.workflow }}"
         git config user.email "github-action@${{ github.repository }}"
         git add CHANGELOG.md
-        git commit -m "$RELEASE_TITLE
+        git commit -m "Release $(python3 -m changelogmd --version latest --version-only)
 
-        $RELEASE_CHANGES"
+        $(python3 -m changelogmd --version latest)"
         RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
         git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${{ github.repository }}.git"
-        git push -f upstream HEAD:${{ env.release_candidate_branch }}
+        git push -f upstream "HEAD:${{ env.RELEASE_CANDIDATE_BRANCH }}"
 
     - name: Create GitHub Release
       id: create_release
@@ -91,13 +102,47 @@ jobs:
 
     - name: Publish Release
       if: steps.is_release.outputs.STATUS == true
+      env:
+        DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
+        DEPLOYMENT_TRIGGER_REPO: ${{ env.DEPLOYMENT_TRIGGER_REPO }}
       run: |
-        CHANGELOG_BODY="$(python3 -m changelogmd --version latest --percent-encode)"
-        RELEASE_VERSION="$(python3 -m changelogmd --version latest --version-only)"
-        POST_DATA="{ \"title\": \"Created by a GitHub Action\", \"body\": \"Repository: ${{ github.repository }}\nVersion: $RELEASE_VERSION\nCommit: ${{ github.sha }}\n\n# Changelog\n$CHANGELOG_BODY\" }"
-        echo "$POST_DATA"
-        curl -s https://api.github.com/repos/${{ env.deployment_trigger_repo }}/issues \
-          -H "Content-Type: application/vnd.github.v3.raw+json" \
-          -H "Authorization: token ${{ secrets.DEPLOY_BOT_TOKEN }}" \
-          -d "$POST_DATA"
-
+        python3 <<___EOF
+        import os
+        import requests
+        import changelogmd
+        import setup # read setup.py
+        latest_version = changelogmd.Changelog().versions[0]
+        api_token = os.environ["DEPLOY_BOT_TOKEN"]
+        current_repo = os.environ["GITHUB_REPOSITORY"]
+        deployment_trigger_repo = os.environ["DEPLOYMENT_TRIGGER_REPO"]
+        source_repo = "${{ github.repository }}"
+        module_name = setup.config["name"]
+        post_data = dict(
+          title=f"{source_repo} Release {str(latest_version.version)}",
+          body="\n".join([
+            f"Module: [{module_name}](https://pypi.org/project/{module_name})",
+            f"Repository: {current_repo}",
+            f"Version: {str(latest_version.version)}",
+            "Commit: ${{ github.sha }}",
+            "\n - ".join([
+              "Packages:",
+            ] + list(setup.config["packages"])),
+            "## Changes",
+            str(latest_version.text)
+          ])
+        )
+        print(f"---\n{post_data['title']}\n\n{post_data['body']}\n---\n")
+        response = requests.post(
+          f"https://api.github.com/repos/{deployment_trigger_repo}/issues",
+          headers={
+            "Content-Type": "application/vnd.github.v3.raw+json",
+            "Authorization": f"token {api_token}"
+          },
+          json=post_data
+        )
+        print(f"HTTP Response: {response.status_code}\n{response.text}\n---")
+        if (200 <= response.status_code < 300):
+          exit(0)
+        else:
+          exit(1)
+        ___EOF
