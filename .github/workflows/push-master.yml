@@ -127,11 +127,24 @@ jobs:
         draft: false
         prerelease: false
 
+    - name: Upload GitHub Release Asset
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        asset_name: "${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        asset_path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        asset_content_type: application/tar+gzip
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+
     - name: Publish Release
       if: steps.is_release.outputs.STATUS == true
       env:
         DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
         DEPLOYMENT_TRIGGER_REPO: ${{ env.DEPLOYMENT_TRIGGER_REPO }}
+        ASSET_DOWNLOAD_URL: ${{ steps.upload_release_asset.outputs.browser_download_url }}
+        ASSET_NAME: "${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
       run: |
         python3 <<___EOF
         import os
@@ -141,16 +154,20 @@ jobs:
         latest_version = changelogmd.Changelog().versions[0]
         api_token = os.environ["DEPLOY_BOT_TOKEN"]
         current_repo = os.environ["GITHUB_REPOSITORY"]
+        git_sha = os.environ["GITHUB_SHA"]
         deployment_trigger_repo = os.environ["DEPLOYMENT_TRIGGER_REPO"]
         source_repo = "$GITHUB_REPOSITORY"
         module_name = setup.config["name"]
+        asset_name = os.environ["ASSET_NAME"]
+        asset_download_url = os.environ["ASSET_DOWNLOAD_URL"]
         post_data = dict(
           title=f"{source_repo} Release {str(latest_version.version)}",
           body="\n".join([
             f"Module: [{module_name}](https://pypi.org/project/{module_name})",
             f"Repository: {current_repo}",
             f"Version: {str(latest_version.version)}",
-            "Commit: $GITHUB_SHA",
+            f"Commit: {git_sha}",
+            f"Asset: [{asset_name}]({asset_download_url})",
             "\n - ".join([
               "Packages:",
             ] + list(setup.config["packages"])),
