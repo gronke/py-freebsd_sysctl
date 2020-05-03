@@ -24,6 +24,9 @@ jobs:
         fetch-depth: 0
     - name: Approve Release Pull-Request
       #if: github.event.sender.login == 'github-actions'
+      env:
+        GITHUB_REVIEWS_URL: "${{ github.event.pull_request.url }}/reviews"
+        DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
       run: |
         if [ $(git cherry ${{ github.event.pull_request.base.sha }} | wc -l) -eq 1 ]; then
           echo "Commit Distance OK";
@@ -32,7 +35,7 @@ jobs:
           exit 1;
         fi
 
-        curl -s "${{ github.event.pull_request.url }}/reviews" \
+        curl -s "$GITHUB_REVIEWS_URL" \
           -H "Content-Type: application/vnd.github.v3.raw+json" \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Authorization: token $DEPLOY_BOT_TOKEN" \
           -d "{ \"commit_id\": \"$(git rev-parse --verify HEAD)\", \"event\": \"APPROVE\" }"
