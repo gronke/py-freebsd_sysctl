@@ -168,10 +168,10 @@ jobs:
             f"Version: {str(latest_version.version)}",
             f"Commit: {git_sha}",
             f"Asset: [{asset_name}]({asset_download_url})",
-            "\n - ".join([
+            "\n- ".join([
               "Packages:",
             ] + list(setup.config["packages"])),
-            "## Changes",
+            "\n## Changes",
             str(latest_version.text)
           ])
         )
