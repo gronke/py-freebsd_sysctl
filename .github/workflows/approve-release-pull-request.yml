@@ -22,20 +22,35 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
+
+    - name: Check Commit
+      id: check_commit
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        COMMIT_DISTANCE="$(git cherry $BASE_SHA | wc -l)"
+        echo "::set-output name=DISTANCE::$COMMIT_DISTANCE"
+        echo "::set-output name=SHA::$(git rev-parse --verify HEAD)"
+
     - name: Approve Release Pull-Request
       #if: github.event.sender.login == 'github-actions'
+      if: steps.check_commit.outputs.DISTANCE == 1
       env:
-        GITHUB_REVIEWS_URL: "${{ github.event.pull_request.url }}/reviews"
-        DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
-      run: |
-        if [ $(git cherry ${{ github.event.pull_request.base.sha }} | wc -l) -eq 1 ]; then
-          echo "Commit Distance OK";
-        else 
-          echo "Only 1 commit allowed.";
-          exit 1;
-        fi
-
-        curl -s "$GITHUB_REVIEWS_URL" \
-          -H "Content-Type: application/vnd.github.v3.raw+json" \
-          -H "Authorization: token $DEPLOY_BOT_TOKEN" \
-          -d "{ \"commit_id\": \"$(git rev-parse --verify HEAD)\", \"event\": \"APPROVE\" }"
+        #DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
+        COMMIT: ${{ steps.commit_distance.outputs.SHA }}
+      uses: actions/github-script@0.9.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.pulls.submitReview({
+            pull_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            event: "APPROVE",
+            commit_id: process.env.COMMIT
+          });
+      # run: |
+      #   curl -s "$GITHUB_REVIEWS_URL" \
+      #     -H "Content-Type: application/vnd.github.v3.raw+json" \
+      #     -H "Authorization: token $DEPLOY_BOT_TOKEN" \
+      #     -d "{ \"commit_id\": \"$(git rev-parse --verify HEAD)\", \"event\": \"APPROVE\" }"
