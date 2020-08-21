@@ -26,6 +26,11 @@ setup(
 	author="Stefan Grönke",
 	author_email="stefan@gronke.net",
 	python_requires=">=3.6",
+	platforms=['FreeBSD'],
+	license="BSD 2-Clause License",
+	classifiers=[
+		"License :: OSI Approved :: BSD 2-Clause License"
+	],
 	tests_require=["pytest-runner", "pytest"],
 	packages=find_packages(exclude=('tests',))
 )
