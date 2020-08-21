@@ -29,6 +29,8 @@ import freebsd_sysctl.libc
 import freebsd_sysctl.types
 import freebsd_sysctl.flags
 
+from freebsd_sysctl.__version__ import __version__
+
 NULL_BYTES = b"\x00"
 CTL_MAXNAME = ctypes.c_uint(24)
 T_OID = (ctypes.c_int * 2)
