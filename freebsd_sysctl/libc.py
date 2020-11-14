@@ -26,4 +26,4 @@ try:
     dll = ctypes.CDLL("libc.so.7")
 except OSError:
     import ctypes.util
-    dll = ctypes.CDLL(str(ctypes.util.find_library("c")), use_errno=True)
+    dll = ctypes.CDLL(str(ctypes.util.find_library("c")))

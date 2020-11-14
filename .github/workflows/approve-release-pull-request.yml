@@ -1,0 +1,56 @@
+# Changes on master have passed CI tests.
+# When the CHANGELOG.md files contains no UNRELEASED changes, the commit is
+# considered a published as GitHub Release and propagated to the
+# deployment_trigger_repo.
+# Otherwise the commit is suggested as release candidate Pull-Request.
+
+name: 'Pull-Request Approval'
+on:
+  pull_request:
+    branches:
+      - master
+    # ignore PR unless only CHANGELOG.md has changed
+    paths-ignore:
+      - '*'
+      - '!CHANGELOG.md'
+    types: [opened, edited, synchronize, reopened]
+jobs:
+  approve:
+    name: "Approve Pull-Request"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Check Commit
+      id: check_commit
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        COMMIT_DISTANCE="$(git cherry $BASE_SHA | wc -l)"
+        echo "::set-output name=DISTANCE::$COMMIT_DISTANCE"
+        echo "::set-output name=SHA::$(git rev-parse --verify HEAD)"
+
+    - name: Approve Release Pull-Request
+      #if: github.event.sender.login == 'github-actions'
+      if: steps.check_commit.outputs.DISTANCE == 1
+      env:
+        #DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
+        COMMIT: ${{ steps.commit_distance.outputs.SHA }}
+      uses: actions/github-script@0.9.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.pulls.submitReview({
+            pull_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            event: "APPROVE",
+            commit_id: process.env.COMMIT
+          });
+      # run: |
+      #   curl -s "$GITHUB_REVIEWS_URL" \
+      #     -H "Content-Type: application/vnd.github.v3.raw+json" \
+      #     -H "Authorization: token $DEPLOY_BOT_TOKEN" \
+      #     -d "{ \"commit_id\": \"$(git rev-parse --verify HEAD)\", \"event\": \"APPROVE\" }"

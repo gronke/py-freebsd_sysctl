@@ -1,0 +1,193 @@
+# Changes on master have passed CI tests.
+# When the CHANGELOG.md files contains no UNRELEASED changes, the commit is
+# considered a published as GitHub Release and propagated to the
+# DEPLOYMENT_TRIGGER_REPO.
+# Otherwise the commit is suggested as release candidate Pull-Request.
+
+name: 'master'
+on:
+  push:
+    branches:
+      - master
+env:
+  DEPLOYMENT_TRIGGER_REPO: "gronke/__deploy-pip"
+  RELEASE_CANDIDATE_BRANCH: "release-candidate"
+  PYTHON_MODULE_NAME: "freebsd_sysctl"
+jobs:
+  checks:
+    name: "Code Style"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: "3.X"
+    - run: python -m ensurepip
+    - run: python -m pip install -U -r requirements-dev.txt
+    - run: python -m flake8 --version
+    - run: python -m mypy --version
+    - run: python -m flake8 --exclude=".travis,.github,.eggs,__init__.py,tests"
+    - run: python -m bandit --skip B404,B110 --exclude tests/ --exclude .github/ *.py "${PYTHON_MODULE_NAME}/*.py"
+  release:
+    name: "Release"
+    runs-on: ubuntu-latest
+    needs: checks
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: "3.X"
+
+    - name: Get Version
+      id: get_version
+      run: |
+        python3 <<___EOF
+        import setup
+        setup.config["name"]
+        NAME=setup.config["name"].replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        VERSION=setup.config["version"].replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        print(f"::set-output name=NAME::{NAME}")
+        print(f"::set-output name=VERSION::{VERSION}")
+        ___EOF
+
+    - name: Install Tools
+      run: python -m pip install -U changelogmd requests
+
+    - name: Read Changelog
+      id: get_changelog
+      run: |
+        python3 <<___EOF
+        import changelogmd
+        latest_version = changelogmd.Changelog().versions[0]
+        text = str(latest_version.text).replace("\r\n", "\n").replace("\r", "\n")
+        CHANGELOG = text.replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        print(f"::set-output name=CHANGELOG::{CHANGELOG}")
+        ___EOF
+
+    - name: Check Release-Candidate
+      id: is_release
+      env:
+        DETECTED_VERSION: ${{ steps.get_version.outputs.VERSION }}
+      run: |
+        python3 <<___EOF
+        import os
+        import changelogmd
+        latest_version = changelogmd.Changelog().versions[0]
+        is_release = (str(latest_version.version) != "UNRELEASED")
+        print(f"::set-output name=STATUS::{str(1 * is_release)}")
+        if is_release is False:
+          VERSION = os.environ["DETECTED_VERSION"].replace("\r","").replace("%", "%25").replace("\n", "%0A")
+        else:
+          print("Release candidate detected.")
+          VERSION = str(latest_version.version).replace("\r","").replace("%", "%25").replace("\n", "%0A")
+          import setup
+          for package in setup.config["packages"]:
+            version_file_path = f"{package}/.version"
+            with open(version_file_path, "w", encoding="UTF-8") as f:
+              f.write(str(latest_version.version))
+              f.truncate()
+              print(f"Static .version file created for '{package}' package")
+        print(f"::set-output name=VERSION::{VERSION}")
+        ___EOF
+
+    - name: Bundle Source Distribution
+      run: python setup.py sdist
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: "${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        description: "${{ steps.get_version.outputs.NAME }} v${{ steps.is_release.outputs.VERSION }}"
+
+    - name: Suggest Release in Pull-Request
+      if: steps.is_release.outputs.STATUS == false
+      run: |
+        python3 -m changelogmd --bump-version
+        git config user.name "GitHub Action: $GITHUB_WORKFLOW"
+        git config user.email "github-action@$GITHUB_REPOSITORY"
+        git add CHANGELOG.md
+        git commit -m "Release $(python3 -m changelogmd --version latest --version-only)
+
+        $(python3 -m changelogmd --version latest)"
+        RELEASE_COMMIT="$(git rev-parse --verify HEAD)"
+        git remote add upstream "https://token:$(echo $GITHUB_TOKEN)@github.com/${GITHUB_REPOSITORY}.git"
+        git push -f upstream "HEAD:$RELEASE_CANDIDATE_BRANCH"
+
+    - name: Create GitHub Release
+      id: create_release
+      if: steps.is_release.outputs.STATUS == true
+      uses: actions/create-release@latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.is_release.outputs.VERSION }}
+        release_name: Release v${{ steps.is_release.outputs.VERSION }}
+        body: ${{ steps.get_changelog.outputs.CHANGELOG }}
+        draft: false
+        prerelease: false
+
+    - name: Upload GitHub Release Asset
+      id: upload_release_asset
+      if: steps.is_release.outputs.STATUS == true
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        asset_name: "${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        asset_path: "dist/${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+        asset_content_type: application/tar+gzip
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    - name: Publish Release
+      if: steps.is_release.outputs.STATUS == true
+      env:
+        DEPLOY_BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
+        DEPLOYMENT_TRIGGER_REPO: ${{ env.DEPLOYMENT_TRIGGER_REPO }}
+        ASSET_DOWNLOAD_URL: ${{ steps.upload_release_asset.outputs.browser_download_url }}
+        ASSET_NAME: "${{ steps.get_version.outputs.NAME }}-${{ steps.is_release.outputs.VERSION }}.tar.gz"
+      run: |
+        python3 <<___EOF
+        import os
+        import requests
+        import changelogmd
+        import setup # read setup.py
+        latest_version = changelogmd.Changelog().versions[0]
+        api_token = os.environ["DEPLOY_BOT_TOKEN"]
+        current_repo = os.environ["GITHUB_REPOSITORY"]
+        git_sha = os.environ["GITHUB_SHA"]
+        deployment_trigger_repo = os.environ["DEPLOYMENT_TRIGGER_REPO"]
+        source_repo = "$GITHUB_REPOSITORY"
+        module_name = setup.config["name"]
+        asset_name = os.environ["ASSET_NAME"]
+        asset_download_url = os.environ["ASSET_DOWNLOAD_URL"]
+        post_data = dict(
+          title=f"{source_repo} Release {str(latest_version.version)}",
+          body="\n".join([
+            f"Module: [{module_name}](https://pypi.org/project/{module_name})",
+            f"Repository: {current_repo}",
+            f"Version: {str(latest_version.version)}",
+            f"Commit: {git_sha}",
+            f"Asset: [{asset_name}]({asset_download_url})",
+            "\n- ".join([
+              "Packages:",
+            ] + list(setup.config["packages"])),
+            "\n## Changes",
+            str(latest_version.text)
+          ])
+        )
+        print(f"---\n{post_data['title']}\n\n{post_data['body']}\n---\n")
+        response = requests.post(
+          f"https://api.github.com/repos/{deployment_trigger_repo}/issues",
+          headers={
+            "Content-Type": "application/vnd.github.v3.raw+json",
+            "Authorization": f"token {api_token}"
+          },
+          json=post_data
+        )
+        print(f"HTTP Response: {response.status_code}\n{response.text}\n---")
+        if (200 <= response.status_code < 300):
+          exit(0)
+        else:
+          exit(1)
+        ___EOF
