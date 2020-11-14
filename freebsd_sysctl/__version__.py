@@ -44,15 +44,13 @@ else:
             __version__ += COMMIT[:8]
 
 if __name__ == "__main__":
-    print(VERSION)
+    print(__version__)
     exit(0)
 
 try:
-    major, minor, patch = tuple(VERSION.split("."))
+    major, minor, patch = tuple(__version__.split("."))
     commit = None
-    __version__ = VERSION
+    __version__ = __version__
 except ValueError:
     major = minor = patch = None
-    commit = VERSION
-
-__version__ = VERSION
+    commit = __version__
