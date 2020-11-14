@@ -4,8 +4,8 @@ import os
 import os.path
 from freebsd_sysctl.__version__ import __version__
 from setuptools import setup
-from distutils.command.build_py import build_py
-from distutils.command.sdist import sdist
+from setuptools.command.build_py import build_py
+from setuptools.command.sdist import sdist
 import distutils.log
 
 
@@ -62,12 +62,10 @@ class SdistCommand(sdist):
                     os.remove(release_file)
 
 
-setup(
-    cmdclass=dict(
-        build_py=BuildCommand,
-        sdist=SdistCommand
-    )
-)
-
 if __name__ == "__main__":
-    setup(**config)
+    setup(
+        cmdclass=dict(
+            build_py=BuildCommand,
+            sdist=SdistCommand
+        )
+    )
