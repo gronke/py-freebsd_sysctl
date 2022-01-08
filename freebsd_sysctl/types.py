@@ -25,6 +25,13 @@ import ctypes
 import typing
 import struct
 
+if struct.calcsize("P") == 4: # 32bit
+    unpack_format_long = "i"
+    unpack_format_ulong = "I"
+else: # assume 64bit - no 128bit yet
+    unpack_format_long = "q"
+    unpack_format_ulong = "Q"
+
 
 class CtlType:
     min_size = 0
@@ -108,13 +115,13 @@ class UINT(CtlType):
 class LONG(CtlType):
     ctype = ctypes.c_long
     min_size = ctypes.sizeof(ctypes.c_long)
-    unpack_format = "q"
+    unpack_format = unpack_format_long
 
 
 class ULONG(CtlType):
     ctype = ctypes.c_ulong
     min_size = ctypes.sizeof(ctypes.c_ulong)
-    unpack_format = "Q"
+    unpack_format = unpack_format_ulong
 
 
 class U64(CtlType):
