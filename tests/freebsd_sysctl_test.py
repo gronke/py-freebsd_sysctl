@@ -144,6 +144,9 @@ def test_sysctl_descriptions(benchmark, sysctl_types):
     descriptions = dict(benchmark(lookup_descriptions, sysctl_types))
 
     for sysctl_name, sysctl_type in sysctl_types.items():
+        if sysctl_type.upper() == "NODE":
+            # skip NODE types because /sbin/sysctl returns multiple results
+            continue
         stdout = subprocess.check_output([
             "/sbin/sysctl",
             "-d",
