@@ -161,10 +161,10 @@ def test_security_jail_param_list(benchmark):
     test_node_name = "security.jail.param"
     stdout = subprocess.check_output([
         "/sbin/sysctl",
-        "-N",
+         "-o",
         test_node_name
     ]).strip().decode()
-    child_names = stdout.split("\n")
+    child_names = [n.split(": ")[0] for n in stdout.split("\n")]
     assert len(child_names) > 0, "test pre-condition"
 
     def get_children(test_node_sysctl):
