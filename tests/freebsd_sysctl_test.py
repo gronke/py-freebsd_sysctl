@@ -96,9 +96,11 @@ def test_sysctl_values(benchmark, sysctl_types):
         "kern.openfiles",
         "kern.cp_time",
         "kern.cp_times",
+        "kern.ipc.numopensockets",
+        "kern.msgbuf",
         "vm.phys_free",
-        "debug.vn_io_faults",
-        "hw.usermem"
+        "net.inet.tcp.hostcache.list",
+        "net.inet.tcp.functions_available"
     ]
 
     def lookup_values(sysctl_types):
@@ -115,11 +117,13 @@ def test_sysctl_values(benchmark, sysctl_types):
             isinstance(raw_value, freebsd_sysctl.types.NODE),
             sysctl_name.endswith("counter"),
             sysctl_name.startswith("vm."),
+            sysctl_name.startswith("hw."),
             sysctl_name.startswith("vfs."),
             sysctl_name.startswith("kstat."),
             sysctl_name.startswith("dev."),
             sysctl_name.startswith("kern.timecounter."),
             sysctl_name.startswith("kern.tty_"),
+            sysctl_name.startswith("kern.epoch.stats."),
             sysctl_name.startswith("debug"),
             (sysctl_name in dynamic_sysctl_names)
         ]):
