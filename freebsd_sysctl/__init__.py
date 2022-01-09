@@ -176,7 +176,7 @@ class Sysctl:
         return buf.value.decode()
 
     @staticmethod
-    def query_fmt(oid: typing.List[int]) -> bytes:
+    def query_fmt(oid: typing.List[int]) -> typing.Tuple[int, bytes]:
 
         qoid_len = (2 + len(oid))
         qoid_type = ctypes.c_int * qoid_len
@@ -203,9 +203,9 @@ class Sysctl:
         if len(buf) < 4:
             raise Exception("response buffer too small")
         result = buf[:buf_length]
-        kind, = struct.unpack("<I", result[:4])
+        kind, = struct.unpack("I", result[:4])
         fmt = result[4:]
-        return (kind, fmt)
+        return (kind & 0xF, fmt)
 
     @staticmethod
     def query_size(
