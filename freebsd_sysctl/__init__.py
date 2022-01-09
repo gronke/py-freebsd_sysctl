@@ -44,7 +44,7 @@ class Sysctl:
     _kind: typing.Optional[int]
     _fmt = typing.Optional[bytes]
     _size: typing.Optional[int]
-    _value: typing.Optional[str]
+    _value: typing.Optional[typing.Any]
     _description: typing.Optional[str]
 
     def __init__(
@@ -95,14 +95,16 @@ class Sysctl:
         return self._size
 
     @property
-    def raw_value(self) -> int:
+    def raw_value(self) -> typing.Any:
         if self._value is None:
             self._value = self.query_value(self.oid, self.size, self.ctl_type)
         return self._value
 
     @property
-    def value(self) -> int:
-        return self.raw_value.value.strip("\n")
+    def value(self) -> typing.Any:
+        if type(self.raw_value.value) == str:
+            return self.raw_value.value.strip("\n")
+        return self.raw_value.value
 
     @property
     def description(self) -> str:
