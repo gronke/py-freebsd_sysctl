@@ -88,6 +88,32 @@ def test_sysctl_types(sysctl_types):
         assert sysctl_type == current_mapped_type, sysctl_name
 
 
+WELL_KNOWNS = [
+    # sysctl-type-name, sysctl name, sysctl -t
+    ["CTLTYPE_INT", "kern.osrevision", "integer"],
+    ["CTLTYPE_STRING", "kern.ostype", "string"],
+    ["CTLTYPE_U8", "kern.poweroff_on_panic", "uint8_t"],
+    ["CTLTYPE_U64", "kern.epoch.stats.epoch_calls", "uint64_t"],
+    ["CTLTYPE_UINT", "kern.maxvnodes", "unsigned integer"],
+    ["CTLTYPE_LONG", "vm.kvm_size", "long integer"],
+    ["CTLTYPE_ULONG", "vm.kmem_size", "unsigned long"]
+]
+
+@pytest.mark.parametrize("item", WELL_KNOWNS)
+def test_explicit_list_of_sysctl_value(item):
+
+    sysctl_name = item[1]
+
+    sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+
+    stdout = subprocess.check_output([
+        "/sbin/sysctl",
+        "-n",
+        sysctl_name
+    ]).strip().decode()
+
+    assert str(sysctl.value) == stdout
+
 def test_sysctl_values(benchmark, sysctl_types):
 
     dynamic_sysctl_names = [
