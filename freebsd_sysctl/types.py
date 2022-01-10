@@ -47,7 +47,7 @@ class CtlType:
         if self.unpack_format is None:
             return self.data.value
         values = list(struct.unpack(
-            f"<{self.unpack_format * self.amount}",
+            f"{self.unpack_format * self.amount}",
             self.data
         ))
         if len(values) == 1:
