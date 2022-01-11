@@ -205,7 +205,7 @@ class Sysctl:
         result = buf[:buf_length]
         kind, = struct.unpack("I", result[:4])
         fmt = result[4:]
-        return (kind & 0xF, fmt)
+        return (kind, fmt)
 
     @staticmethod
     def query_size(
