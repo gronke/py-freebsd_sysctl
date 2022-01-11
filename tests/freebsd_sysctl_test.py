@@ -87,6 +87,22 @@ def test_sysctl_types(sysctl_types):
         current_mapped_type = map_sysctl_type(current_sysctl.ctl_type)
         assert sysctl_type == current_mapped_type, sysctl_name
 
+OPAQUES = [
+    ("kern.clockrate", "S,clockinfo"),
+    ("vm.loadavg", "S,loadavg"),
+    ("kern.boottime", "S,timeval"),
+    ("vm.vmtotal", "S,vmtotal"),
+    # ("", "S,input_id"), # doesn't seem to exist
+    ("hw.pagesizes.", "S,pagesizes")
+    # ("", "S,efi_map_header"), # amd64 only
+    # ("machdep.smap", "S,bios_smap_xattr"), # amd64/i386 only
+]
+
+@pytest.mark.parametrize("sysctl_name, expected", OPAQUES)
+def test_sysctl_opaque_fmt(sysctl_name, expected):
+    sysctl = freebsd_sysctl.Sysctl(sysctl_name)
+    assert sysctl.fmt == expected
+
 
 WELL_KNOWNS = [
     # sysctl-type-name, sysctl name, sysctl -t
