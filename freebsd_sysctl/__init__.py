@@ -125,6 +125,10 @@ class Sysctl:
             yield current
             current = current.next
 
+    def refresh(self) -> typing.Any:
+        self._value = None
+        return self.value
+
     def __query_kind_and_fmt(self) -> None:
         self._kind, self._fmt = self.query_fmt(self.oid)
 
