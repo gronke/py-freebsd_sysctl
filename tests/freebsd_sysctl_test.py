@@ -138,9 +138,11 @@ def test_sysctl_values(benchmark, sysctl_types):
         "kern.openfiles",
         "kern.cp_time",
         "kern.cp_times",
+        "kern.ipc.numopensockets",
+        "kern.msgbuf",
         "vm.phys_free",
-        "debug.vn_io_faults",
-        "hw.usermem"
+        "net.inet.tcp.hostcache.list",
+        "net.inet.tcp.functions_available"
     ]
 
     def lookup_values(sysctl_types):
@@ -157,11 +159,13 @@ def test_sysctl_values(benchmark, sysctl_types):
             isinstance(raw_value, freebsd_sysctl.types.NODE),
             sysctl_name.endswith("counter"),
             sysctl_name.startswith("vm."),
+            sysctl_name.startswith("hw."),
             sysctl_name.startswith("vfs."),
             sysctl_name.startswith("kstat."),
             sysctl_name.startswith("dev."),
             sysctl_name.startswith("kern.timecounter."),
             sysctl_name.startswith("kern.tty_"),
+            sysctl_name.startswith("kern.epoch.stats."),
             sysctl_name.startswith("debug"),
             (sysctl_name in dynamic_sysctl_names)
         ]):
@@ -186,6 +190,9 @@ def test_sysctl_descriptions(benchmark, sysctl_types):
     descriptions = dict(benchmark(lookup_descriptions, sysctl_types))
 
     for sysctl_name, sysctl_type in sysctl_types.items():
+        if sysctl_type.upper() == "NODE":
+            # skip NODE types because /sbin/sysctl returns multiple results
+            continue
         stdout = subprocess.check_output([
             "/sbin/sysctl",
             "-d",
@@ -200,10 +207,10 @@ def test_security_jail_param_list(benchmark):
     test_node_name = "security.jail.param"
     stdout = subprocess.check_output([
         "/sbin/sysctl",
-        "-N",
+         "-o",
         test_node_name
     ]).strip().decode()
-    child_names = stdout.split("\n")
+    child_names = [n.split(": ")[0] for n in stdout.split("\n")]
     assert len(child_names) > 0, "test pre-condition"
 
     def get_children(test_node_sysctl):
