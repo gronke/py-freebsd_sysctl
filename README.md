@@ -35,7 +35,7 @@ It is meant for performant (read) access to sysctls, their type, value and descr
 176879
 ```
 
-With either a sysctl `name` or `oid` the other properties provide memorized access to lazy-loaded properties.
+With either a sysctl `name` or `oid` the other properties provide memoized access to lazy-loaded properties.
 
 ## Properties
 
