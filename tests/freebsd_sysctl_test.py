@@ -229,5 +229,5 @@ def test_sysctl_refresh():
     list = []
     for i in range(10):
         list.append(bytearray(10 * 1024 * 1024))
-        assert last != sysctl.refresh()
+        assert last != sysctl.value
         last = sysctl.value

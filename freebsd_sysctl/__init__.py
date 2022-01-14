@@ -44,7 +44,6 @@ class Sysctl:
     _kind: typing.Optional[int]
     _fmt = typing.Optional[str]
     _size: typing.Optional[int]
-    _value: typing.Optional[typing.Any]
     _description: typing.Optional[str]
 
     def __init__(
@@ -57,7 +56,6 @@ class Sysctl:
         self._kind = None
         self._fmt = None
         self._size = None
-        self._value = None
         self._description = None
 
     @property
@@ -96,15 +94,14 @@ class Sysctl:
 
     @property
     def raw_value(self) -> typing.Any:
-        if self._value is None:
-            self._value = self.query_value(self.oid, self.size, self.ctl_type)
-        return self._value
+        return self.query_value(self.oid, self.size, self.ctl_type)
 
     @property
     def value(self) -> typing.Any:
-        if type(self.raw_value.value) == str:
-            return self.raw_value.value.strip("\n")
-        return self.raw_value.value
+        v = self.raw_value.value
+        if type(v) == str:
+            return v.strip("\n")
+        return v
 
     @property
     def description(self) -> str:
@@ -124,10 +121,6 @@ class Sysctl:
         while self.oid == current.oid[:len(self.oid)]:
             yield current
             current = current.next
-
-    def refresh(self) -> typing.Any:
-        self._value = None
-        return self.value
 
     def __query_kind_and_fmt(self) -> None:
         self._kind, self._fmt = self.query_fmt(self.oid)
