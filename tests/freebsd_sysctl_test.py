@@ -222,3 +222,12 @@ def test_security_jail_param_list(benchmark):
     assert all([a == b for a, b in zip(test_node_child_names, child_names)]), (
         "the order of children or their names differed"
     )
+
+def test_sysctl_refresh():
+    sysctl = freebsd_sysctl.Sysctl("vm.stats.vm.v_free_count")
+    last = sysctl.value
+    list = []
+    for i in range(10):
+        list.append(bytearray(10 * 1024 * 1024))
+        assert last != sysctl.value
+        last = sysctl.value

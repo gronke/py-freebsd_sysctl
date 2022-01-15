@@ -14,6 +14,16 @@ It is meant for performant (read) access to sysctls, their type, value and descr
 <class 'freebsd_sysctl.types.INT'>
 >>> Sysctl("security.jail.enforce_statfs").description
 'Processes in jail cannot see all mounted file systems (deprecated)'
+
+>>> free_count = Sysctl("vm.stats.vm.v_free_count")
+>>> free_count.value
+180054
+>>> free_count.value
+180054
+>>> b = bytearray(100*1024*1024)
+>>> b = None
+>>> free_count.value
+176879
 ```
 
 With either a sysctl `name` or `oid` the other properties provide memoized access to lazy-loaded properties.
@@ -31,7 +41,7 @@ With either a sysctl `name` or `oid` the other properties provide memoized acces
 
 | Read Property Name | Description |
 | ------------- | ----------- |
-| `value`       | Value of a sysctl. `sysctl <name>` |
+| `value`       | Value of a sysctl. `sysctl <name>` Each call fetches a new value. |
 | `ctl_type`    | sysctl type class. `sysctl -t <name>` |
 | `description` | Text description of the sysctl. `sysctl -d <name>` |
 
